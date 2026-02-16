@@ -1,0 +1,350 @@
+:root {
+    --color-primary: #00f3ff; /* Cyan */
+    --color-secondary: #ff00ff; /* Magenta */
+    --color-tertiary: #39ff14; /* Lime Green */
+    --color-accent: #ffae00; /* Bright Orange */
+    --color-dark: #0a0a0a;
+    --color-glass: rgba(20, 20, 30, 0.6);
+    --color-text: #ffffff;
+    --font-main: 'Montserrat', sans-serif;
+    --ad-height: 60px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none; /* iOS Safari */
+    touch-action: none; /* Prevent browser gestures */
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--color-dark);
+    color: var(--color-text);
+    overflow: hidden; /* Prevent scroll */
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Layer 1: Abyss Background */
+#abyss-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+    z-index: -2; /* Behind everything */
+    overflow: hidden;
+}
+
+/* Add some stars/particles to abyss via CSS if possible, or just a simple gradient for now */
+#abyss-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 130px 80px, #ffffff, rgba(0,0,0,0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.3;
+    animation: drift 60s linear infinite;
+}
+
+@keyframes drift {
+    from { transform: translate(0, 0); }
+    to { transform: translate(-50%, -50%); }
+}
+
+
+/* Layer 2: Game Canvas */
+#game-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - var(--ad-height)); /* Subtract ad height */
+    z-index: 0;
+    display: block;
+}
+
+/* Layer 3: UI Overlay */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - var(--ad-height));
+    z-index: 10;
+    pointer-events: none; /* Let touches pass through to canvas */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Ad Banner */
+#ad-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--ad-height);
+    background-color: #222;
+    color: #666;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    z-index: 100;
+    border-top: 1px solid #444;
+}
+
+/* Screens */
+.screen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto; /* Enable clicks on UI elements */
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 20;
+}
+
+/* Typography & Buttons */
+h1 {
+    font-size: 3rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    text-shadow: 0 0 20px var(--color-primary);
+    margin-bottom: 2rem;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+h2 {
+    font-size: 2rem;
+    color: var(--color-secondary);
+    text-shadow: 0 0 10px var(--color-secondary);
+    margin-bottom: 1rem;
+}
+
+button {
+    font-family: var(--font-main);
+    font-weight: 700;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    border-radius: 12px;
+    padding: 15px 30px;
+    margin: 10px;
+    font-size: 1.2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary), #00aaff);
+    color: #000;
+    box-shadow: 0 0 15px var(--color-primary);
+}
+
+.btn-primary:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 5px var(--color-primary);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--color-text);
+}
+
+.pulse {
+    animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+    0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(0, 243, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
+}
+
+/* Main Menu Specifics */
+.coin-display {
+    font-size: 1.5rem;
+    color: var(--color-accent);
+    margin-bottom: 2rem;
+    text-shadow: 0 0 10px var(--color-accent);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid var(--color-accent);
+}
+
+.bottom-controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+}
+
+/* HUD Specifics */
+#screen-hud {
+    justify-content: flex-start; /* Align items to top */
+    align-items: stretch; /* Fill width */
+}
+
+.hud-top-left, .hud-top-center, .hud-top-right {
+    position: absolute;
+    top: 20px;
+    padding: 10px;
+}
+
+.hud-top-left { left: 20px; }
+.hud-top-center {
+    left: 50%;
+    transform: translateX(-50%);
+}
+.hud-top-right { right: 20px; text-align: right; }
+
+#game-timer {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--color-text);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.score-box, .kills-box {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--color-tertiary); /* Lime Green for score */
+}
+
+.rank-item {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+
+/* Joystick Zone */
+#joystick-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5; /* Above canvas, below buttons if any */
+    /* Ensure it doesn't block top UI */
+    pointer-events: auto;
+}
+
+/* Shop Grid */
+.skin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px;
+    max-height: 50vh;
+    overflow-y: auto;
+    width: 90%;
+    max-width: 400px;
+}
+
+.skin-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.skin-item.selected {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 15px var(--color-primary);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.skin-item.locked {
+    opacity: 0.5;
+    filter: grayscale(1);
+}
+
+/* Game Over Screen */
+.progress-container {
+    width: 80%;
+    max-width: 300px;
+    margin: 20px 0;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--color-tertiary);
+    box-shadow: 0 0 10px var(--color-tertiary);
+    transition: width 1s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .btn-primary { padding: 12px 24px; font-size: 1rem; }
+    .skin-grid { grid-template-columns: 1fr; }
+}
