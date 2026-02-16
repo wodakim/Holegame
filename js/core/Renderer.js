@@ -31,35 +31,47 @@ export default class Renderer {
         this.updateParallax(camera);
 
         // 1. Apply Camera Transform
-        // We want the camera position (world coords) to be at the center of the screen
         this.ctx.translate(this.width / 2, this.height / 2);
         this.ctx.scale(camera.zoom, camera.zoom);
         this.ctx.translate(-camera.x, -camera.y);
 
+        // Calculate Viewport Bounds for Culling
+        const vpW = this.width / camera.zoom;
+        const vpH = this.height / camera.zoom;
+        const viewLeft = camera.x - vpW / 2 - 100;
+        const viewRight = camera.x + vpW / 2 + 100;
+        const viewTop = camera.y - vpH / 2 - 100;
+        const viewBottom = camera.y + vpH / 2 + 100;
+
+        // Helper to check visibility
+        const isVisible = (e) => {
+            const r = e.radius || Math.max(e.width || 0, e.height || 0) || 50;
+            return (e.x + r > viewLeft && e.x - r < viewRight &&
+                    e.y + r > viewTop && e.y - r < viewBottom);
+        };
+
         // 2. Draw Floor (The City Grid)
-        // We need to draw a large enough area to cover the view
-        // Or just draw the visible grid.
-        // For simplicity, let's draw a fixed large world or infinite grid.
-        // Infinite grid is better.
         this.drawFloor(camera);
 
         // 3. Draw Holes (Players/Bots) -> The "Void" Effect
-        // This erases the floor to reveal the abyss (CSS background)
         this.ctx.globalCompositeOperation = 'destination-out';
 
         entities.forEach(entity => {
             if (entity.type === 'hole') {
-                this.drawHole(entity);
+                if (isVisible(entity)) this.drawHole(entity);
             }
         });
 
         // 4. Draw Props & Particles (Normal rendering)
         this.ctx.globalCompositeOperation = 'source-over';
 
-        // Draw Shadows/Glows first?
-
         entities.forEach(entity => {
+            // Optimization: Skip off-screen entities
+            // Holes are critical so we check them above, but props/particles must be culled
+            if (!isVisible(entity)) return;
+
             if (entity.type === 'floating_text') return; // Draw last
+
             if (entity.type !== 'hole') { // Props, particles
                 entity.draw(this.ctx);
             } else {
@@ -71,7 +83,8 @@ export default class Renderer {
         // Draw UI entities (Floating Text) last
         entities.forEach(entity => {
             if (entity.type === 'floating_text') {
-                entity.draw(this.ctx);
+                // Floating text might move, but check origin
+                if (isVisible(entity)) entity.draw(this.ctx);
             }
         });
 

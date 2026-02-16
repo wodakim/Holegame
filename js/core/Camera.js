@@ -17,18 +17,30 @@ export default class Camera {
         // Or just the center point? Let's treat camera.x/y as the center point of the view.
 
         // Heavier camera feel (Juicy Lag)
-        const lerpFactor = 3 * dt;
+        // Increased lerp factor for responsiveness while keeping weight
+        const lerpFactor = 5 * dt;
         this.x += (target.x - this.x) * lerpFactor;
         this.y += (target.y - this.y) * lerpFactor;
 
         // Cinematic Zoom smoothing
-        const zoomLerp = 1 * dt;
+        // Increased speed significantly to avoid "unresponsive" feel
+        const zoomLerp = 3 * dt;
         this.zoom += (this.targetZoom - this.zoom) * zoomLerp;
+
+        // Clamp Zoom to sane values just in case
+        this.zoom = Math.max(0.1, Math.min(2.0, this.zoom));
 
         // Apply shake decay
         if (this.shakeStrength > 0) {
-            this.x += (Math.random() - 0.5) * this.shakeStrength;
-            this.y += (Math.random() - 0.5) * this.shakeStrength;
+            // Apply shake offset without permanently changing camera position
+            // But here we modify x/y directly.
+            // Better to have a separate shakeOffset but this works for simple shake.
+            const shakeX = (Math.random() - 0.5) * this.shakeStrength;
+            const shakeY = (Math.random() - 0.5) * this.shakeStrength;
+
+            this.x += shakeX;
+            this.y += shakeY;
+
             this.shakeStrength -= this.shakeStrength * 5 * dt;
             if (this.shakeStrength < 0.1) this.shakeStrength = 0;
         }

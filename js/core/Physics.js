@@ -6,6 +6,9 @@ export default class Physics {
     update(dt, entities, onEat) {
         // 1. Move everything
         entities.forEach(entity => {
+            // Particles handle their own movement/physics in their update() method
+            if (entity.type === 'particle') return;
+
             if (entity.velocity) {
                 entity.x += entity.velocity.x * dt;
                 entity.y += entity.velocity.y * dt;
@@ -48,20 +51,29 @@ export default class Physics {
                 const dx = hole.x - prop.x;
                 const dy = hole.y - prop.y;
                 const distSq = dx*dx + dy*dy;
-                const pullRadius = hole.radius + Math.max(prop.width || prop.radius, prop.height || prop.radius); // Rough bounding
+
+                // Calculate prop effective radius
+                const propR = prop.radius || (Math.max(prop.width, prop.height) / 2);
+
+                // Improve Suction Logic:
+                // Make the pull radius more generous so objects start sliding earlier.
+                // Was: hole.radius + prop.radius
+                // Now: hole.radius * 1.4 + prop.radius + Constant
+                const pullRadius = (hole.radius * 1.4) + propR + 30;
 
                 // If within pull range
-                const magnetMultiplier = hole.activePowerUps && hole.activePowerUps['magnet'] ? 3.0 : 1.5;
-                if (distSq < pullRadius * pullRadius * magnetMultiplier) {
-                    // Check if prop is smaller
-                    // Calculate prop effective radius
-                    const propR = prop.radius || (Math.max(prop.width, prop.height) / 2);
+                const magnetMultiplier = hole.activePowerUps && hole.activePowerUps['magnet'] ? 2.0 : 1.0;
 
+                if (distSq < (pullRadius * magnetMultiplier) ** 2) {
+                    // Check if prop is smaller
                     if (hole.radius > propR) {
                         // SUCTION LOGIC
                         // 1. Move prop towards hole center
                         const dist = Math.sqrt(distSq);
-                        const force = (hole.radius / dist) * 400 * dt; // Doubled suction force for snappiness
+                        // Force increases as it gets closer.
+                        // At edge (dist = pullRadius): Force should be small but noticeable.
+                        // At center (dist = 0): Force huge.
+                        const force = (hole.radius / (dist + 10)) * 500 * dt;
                         const nx = dx / dist;
                         const ny = dy / dist;
 

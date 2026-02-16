@@ -147,27 +147,29 @@ export default class GameManager {
         });
 
         // 3. Entity Logic Update
-        // Input for player
-        if (this.player && !this.player.markedForDeletion) {
-            const input = this.app.inputHandler.getVector();
-            this.player.update(dt, input);
-
-            // Camera Follow Player
-            this.camera.follow(this.player, dt);
-
-            // Adjust Zoom based on player size
-            const targetZoom = Math.max(0.2, 1 - (this.player.radius - 40) / 1000); // Smoother zoom for large map
-            this.camera.setTargetZoom(targetZoom);
-        }
-
-        // Bot Logic
         this.entities.forEach(entity => {
-            if (entity.type === 'hole' && entity !== this.player) {
+            if (entity === this.player) {
+                if (!entity.markedForDeletion) {
+                    const input = this.app.inputHandler.getVector();
+                    entity.update(dt, input);
+
+                    // Camera Follow Player
+                    this.camera.follow(this.player, dt);
+
+                    // Adjust Zoom based on player size
+                    // Base zoom is 1.0 at radius 40.
+                    // Max zoom out (0.4) at radius 500.
+                    const targetZoom = Math.max(0.4, 1 - (this.player.radius - 40) / 800);
+                    this.camera.setTargetZoom(targetZoom);
+                }
+            } else if (entity.type === 'hole') { // Bots
                 // Pass all entities to bot for AI decision
                 entity.update(dt, this.entities);
-            } else if (entity.type === 'bot' && entity.isPolice) {
-                 // Police update
-                 entity.update(dt, this.entities);
+            } else if (entity.isPolice) {
+                entity.update(dt, this.entities);
+            } else {
+                // Props, Particles, PowerUps, FloatingText
+                if (entity.update) entity.update(dt);
             }
         });
 
@@ -344,8 +346,10 @@ export default class GameManager {
         this.spawnFloatingText(this.player.x, this.player.y - 50, text, color, size);
     }
 
-    spawnParticles(x, y, color, amount = 10) {
-        for (let i = 0; i < amount; i++) {
+    spawnParticles(x, y, color, amount = 5) {
+        // Reduced particle count for performance and cleaner look
+        const count = Math.min(amount, 8);
+        for (let i = 0; i < count; i++) {
             this.entities.push(new Particle(x, y, color));
         }
     }

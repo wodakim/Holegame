@@ -105,23 +105,81 @@ export default class Prop extends Entity {
             }
         }
         else if (this.propType === 'building') {
-            // Isometric 3D Effect
+            // "True" Isometric/2.5D Effect
+            // Roof is at (0,0) - centered
+            // Base is shifted by (depthX, depthY)
             const w = this.width;
             const h = this.height;
-            const depth = 40; // Simulated height
+            const depth = 40;
+            const shiftX = 20; // Shift right
+            const shiftY = 30; // Shift down
 
-            // 1. Draw Side (The "Wall" going down)
-            // Shifted down by depth
-            ctx.fillStyle = '#0a0a0a'; // Very dark wall
+            // Calculate corners of Roof
+            const tl = {x: -w/2, y: -h/2}; // Top-Left
+            const tr = {x: w/2, y: -h/2};  // Top-Right
+            const bl = {x: -w/2, y: h/2};  // Bottom-Left
+            const br = {x: w/2, y: h/2};   // Bottom-Right
+
+            // Calculate corners of Base (Shifted)
+            const b_br = {x: br.x + shiftX, y: br.y + shiftY};
+            const b_tr = {x: tr.x + shiftX, y: tr.y + shiftY};
+            const b_bl = {x: bl.x + shiftX, y: bl.y + shiftY};
+
+            // 1. Draw Shadows (Base footprint)
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.beginPath();
-            ctx.moveTo(-w/2, -h/2);
-            ctx.lineTo(w/2, -h/2);
-            ctx.lineTo(w/2, h/2 + depth); // Bottom Right projected
-            ctx.lineTo(-w/2, h/2 + depth); // Bottom Left projected
+            ctx.moveTo(tl.x + shiftX, tl.y + shiftY);
+            ctx.lineTo(tr.x + shiftX, tr.y + shiftY);
+            ctx.lineTo(br.x + shiftX, br.y + shiftY);
+            ctx.lineTo(bl.x + shiftX, bl.y + shiftY);
             ctx.closePath();
             ctx.fill();
 
-            // 2. Draw Roof (The Neon Top)
+            // 2. Draw South Face (Front)
+            // Connect bl -> br -> b_br -> b_bl
+            ctx.fillStyle = '#0a0a0a'; // Darkest
+            ctx.beginPath();
+            ctx.moveTo(bl.x, bl.y);
+            ctx.lineTo(br.x, br.y);
+            ctx.lineTo(b_br.x, b_br.y);
+            ctx.lineTo(b_bl.x, b_bl.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // South Face Details (Windows)
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = 0.3;
+            for(let i=0; i<3; i++) {
+                // Interpolate
+                const startX = bl.x + (br.x - bl.x) * (0.2 + i*0.25);
+                const startY = bl.y + (br.y - bl.y) * (0.2 + i*0.25);
+                ctx.fillRect(startX, startY, 4, shiftY * 0.8);
+            }
+            ctx.globalAlpha = 1.0;
+
+
+            // 3. Draw East Face (Side)
+            // Connect tr -> br -> b_br -> b_tr
+            ctx.fillStyle = '#1a1a1a'; // Slightly lighter
+            ctx.beginPath();
+            ctx.moveTo(tr.x, tr.y);
+            ctx.lineTo(br.x, br.y);
+            ctx.lineTo(b_br.x, b_br.y);
+            ctx.lineTo(b_tr.x, b_tr.y);
+            ctx.closePath();
+            ctx.fill();
+
+             // East Face Details
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = 0.2;
+            for(let i=0; i<3; i++) {
+                 const startY = tr.y + (br.y - tr.y) * (0.2 + i*0.25);
+                 ctx.fillRect(tr.x, startY + 5, shiftX * 0.8, 2);
+            }
+            ctx.globalAlpha = 1.0;
+
+
+            // 4. Draw Roof (Top)
             // Drawn at normal position (x,y)
             ctx.fillStyle = '#111';
             ctx.fillRect(-w/2, -h/2, w, h);
@@ -133,16 +191,15 @@ export default class Prop extends Entity {
             ctx.shadowColor = this.color;
             ctx.strokeRect(-w/2, -h/2, w, h);
 
-            // Windows / Grid on Roof
+            // Roof Grid
             ctx.fillStyle = this.color;
-            ctx.globalAlpha = 0.5;
-            // Simple grid pattern
-            for(let i=1; i<4; i++) {
-                ctx.fillRect(-w/2 + (w/4)*i, -h/2, 2, h);
-                ctx.fillRect(-w/2, -h/2 + (h/4)*i, w, 2);
-            }
+            ctx.globalAlpha = 0.4;
+            ctx.fillRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10);
             ctx.globalAlpha = 1.0;
             ctx.shadowBlur = 0;
+
+            // Reset Shadow
+            ctx.shadowColor = 'transparent';
         }
 
         ctx.restore();

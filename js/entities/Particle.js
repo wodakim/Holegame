@@ -42,12 +42,17 @@ export default class Particle extends Entity {
 
     draw(ctx) {
         ctx.save();
-        ctx.globalAlpha = this.life / this.maxLife;
+        ctx.globalAlpha = Math.max(0, (this.life / this.maxLife) * 0.8);
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
+        // Neon Glow Effect
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
         ctx.fillStyle = this.color;
 
+        // Simplified shapes
         if (this.shape === 'square') {
             ctx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
         } else if (this.shape === 'triangle') {
@@ -57,8 +62,8 @@ export default class Particle extends Entity {
             ctx.lineTo(-this.radius, this.radius);
             ctx.fill();
         } else {
-            // Shard (Thin Rectangle)
-            ctx.fillRect(-this.radius/4, -this.radius, this.radius/2, this.radius*2);
+            // Shard
+            ctx.fillRect(-this.radius/2, -this.radius, this.radius, this.radius * 2);
         }
 
         ctx.restore();
