@@ -27,6 +27,9 @@ export default class Renderer {
 
         this.ctx.save();
 
+        // 0. Update Parallax Background (CSS)
+        this.updateParallax(camera);
+
         // 1. Apply Camera Transform
         // We want the camera position (world coords) to be at the center of the screen
         this.ctx.translate(this.width / 2, this.height / 2);
@@ -115,6 +118,16 @@ export default class Renderer {
         this.ctx.stroke();
     }
 
+    updateParallax(camera) {
+        const bg = document.getElementById('abyss-background');
+        if (bg) {
+            // Move background slower than camera (e.g., 10% speed)
+            const offsetX = -camera.x * 0.1;
+            const offsetY = -camera.y * 0.1;
+            bg.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+        }
+    }
+
     drawHole(entity) {
         // The actual "cut"
         this.ctx.beginPath();
@@ -185,6 +198,35 @@ export default class Renderer {
             this.ctx.fillText(entity.name, entity.x, entity.y - entity.radius - 20);
             this.ctx.shadowBlur = 0;
         }
+
+        // 5. Draw Police Siren
+        if (entity.isPolice) {
+            this.drawSiren(entity);
+        }
+    }
+
+    drawSiren(entity) {
+        const time = Date.now() * 0.005; // Faster rotation
+        this.ctx.save();
+        this.ctx.translate(entity.x, entity.y);
+        this.ctx.rotate(time);
+
+        // Blue Light Cone
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, 0);
+        this.ctx.arc(0, 0, entity.radius * 2, -0.5, 0.5);
+        this.ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
+        this.ctx.fill();
+
+        // Red Light Cone (Opposite)
+        this.ctx.rotate(Math.PI);
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, 0);
+        this.ctx.arc(0, 0, entity.radius * 2, -0.5, 0.5);
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+        this.ctx.fill();
+
+        this.ctx.restore();
     }
 
     // Updated to accept coordinates explicitly or default

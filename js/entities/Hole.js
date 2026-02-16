@@ -80,9 +80,4 @@ export default class Hole extends Entity {
         this.radius = Math.sqrt(newArea / Math.PI);
         this.speed = Math.max(50, 200 - (this.radius - 30) * 0.5);
     }
-
-    update(dt) {
-        // Movement logic will be handled by subclasses (Player input vs Bot AI)
-        super.update(dt);
-    }
 }

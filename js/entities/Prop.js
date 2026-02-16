@@ -7,7 +7,7 @@ export default class Prop extends Entity {
         super(x, y, radius, color);
 
         this.type = 'prop';
-        this.propType = type; // 'cone', 'car', 'building'
+        this.propType = type; // 'cone', 'car', 'building', 'truck', 'bus'
         this.value = value; // Score value
         this.width = width;
         this.height = height;
@@ -41,59 +41,66 @@ export default class Prop extends Entity {
             ctx.ellipse(0, this.height/2, this.width/2, this.width/4, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        else if (this.propType === 'car' || this.propType === 'police') {
-            // Ensure Length is along X (w)
-            const w = Math.max(this.width, this.height);
-            const h = Math.min(this.width, this.height);
+        else if (['car', 'police', 'truck', 'bus'].includes(this.propType)) {
+            // Common Vehicle Drawing
+            const w = Math.max(this.width, this.height); // Length
+            const h = Math.min(this.width, this.height); // Width
             const isPolice = this.propType === 'police';
+            const isTruck = this.propType === 'truck';
+            const isBus = this.propType === 'bus';
 
-            // Headlights (Yellow Cones) - Facing Right (0 deg)
-            // Assuming car length is along X axis? No, width/height passed usually w < h for vertical car?
-            // Let's assume car is drawn facing UP (-Y) or RIGHT (+X).
-            // Usually car sprites face UP. But rotation aligns them.
-            // Let's draw car facing RIGHT (+X).
-
-            // Headlights (Refined)
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.15)'; // Slightly more transparent
+            // Headlights
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.15)';
             ctx.beginPath();
-            // Narrower and shorter beam
             const beamLength = 100;
             const beamSpread = h * 1.5;
-
             ctx.moveTo(w/2, -h/3);
             ctx.lineTo(w/2 + beamLength, -beamSpread);
-            ctx.arc(w/2, 0, beamLength, -Math.PI/6, Math.PI/6); // Narrower Cone (30 deg)
+            ctx.arc(w/2, 0, beamLength, -Math.PI/6, Math.PI/6);
             ctx.lineTo(w/2, h/3);
             ctx.fill();
 
-            // Taillights (Red Glow)
+            // Taillights
             ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
             ctx.beginPath();
             ctx.arc(-w/2, 0, 20, 0, Math.PI * 2);
             ctx.fill();
 
-            // Car Body
+            // Body Color
             ctx.fillStyle = this.color;
-            if (isPolice) ctx.fillStyle = '#111'; // Black/White for police
+            if (isPolice) ctx.fillStyle = '#111';
 
             // Chassis
-            this.roundRect(ctx, -w/2, -h/2, w, h, 8);
+            const cornerRadius = (isTruck || isBus) ? 2 : 8;
+            this.roundRect(ctx, -w/2, -h/2, w, h, cornerRadius);
             ctx.fill();
 
-            // Roof / Windshield (Darker)
+            // Details
             ctx.fillStyle = '#222';
-            this.roundRect(ctx, -w/4, -h/2 + 5, w/2, h - 10, 4);
-            ctx.fill();
+            if (isTruck) {
+                // Cab
+                this.roundRect(ctx, w/4, -h/2 + 2, w/4 - 2, h - 4, 2);
+                ctx.fill();
+                // Trailer line
+                ctx.fillStyle = '#111';
+                ctx.fillRect(w/4 - 2, -h/2, 2, h);
+            } else if (isBus) {
+                // Long windows
+                ctx.fillStyle = '#444';
+                this.roundRect(ctx, -w/2 + 5, -h/2 + 5, w - 10, h - 10, 2);
+                ctx.fill();
+            } else {
+                // Car/Police Roof
+                this.roundRect(ctx, -w/4, -h/2 + 5, w/2, h - 10, 4);
+                ctx.fill();
+            }
 
             if (isPolice) {
-                // Siren Lights
                 const blink = Math.floor(Date.now() / 150) % 2 === 0;
                 ctx.shadowBlur = 20;
-
                 ctx.fillStyle = blink ? '#ff0000' : '#0000ff';
                 ctx.shadowColor = ctx.fillStyle;
                 ctx.fillRect(-5, -h/4, 10, h/2);
-
                 ctx.shadowBlur = 0;
             }
         }

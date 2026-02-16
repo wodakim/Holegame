@@ -10,7 +10,8 @@ export default class Particle extends Entity {
             x: Math.cos(angle) * speed,
             y: Math.sin(angle) * speed
         };
-        this.life = 0.6 + Math.random() * 0.4;
+        this.maxLife = 0.6 + Math.random() * 0.4;
+        this.life = this.maxLife;
         this.originalRadius = this.radius;
 
         // Juicy details
@@ -36,12 +37,12 @@ export default class Particle extends Entity {
         this.velocity.y *= 0.95;
 
         // Shrink
-        this.radius = this.originalRadius * (this.life);
+        this.radius = this.originalRadius * (this.life / this.maxLife);
     }
 
     draw(ctx) {
         ctx.save();
-        ctx.globalAlpha = this.life;
+        ctx.globalAlpha = this.life / this.maxLife;
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 

@@ -1,3 +1,5 @@
+import Minimap from './Minimap.js';
+
 export default class UIManager {
     constructor(app) {
         this.app = app;
@@ -5,9 +7,11 @@ export default class UIManager {
             menu: document.getElementById('screen-main-menu'),
             hud: document.getElementById('screen-hud'),
             shop: document.getElementById('screen-shop'),
-            gameOver: document.getElementById('screen-game-over')
+            gameOver: document.getElementById('screen-game-over'),
+            pause: document.getElementById('screen-pause')
         };
 
+        this.minimap = new Minimap(document.getElementById('minimap-canvas'), app);
         this.bindEvents();
     }
 
@@ -23,6 +27,11 @@ export default class UIManager {
         // Game Over
         document.getElementById('btn-revive').addEventListener('click', () => this.app.gameManager.revivePlayer());
         document.getElementById('btn-replay').addEventListener('click', () => this.app.gameManager.startGame());
+
+        // Pause
+        document.getElementById('btn-pause').addEventListener('click', () => this.app.gameManager.pauseGame());
+        document.getElementById('btn-resume').addEventListener('click', () => this.app.gameManager.resumeGame());
+        document.getElementById('btn-quit').addEventListener('click', () => this.app.gameManager.quitGame());
     }
 
     switchScreen(screenName) {
@@ -67,6 +76,9 @@ export default class UIManager {
             if (h === player) div.style.color = '#ffae00';
             leaderboard.appendChild(div);
         });
+
+        // Update Minimap
+        this.minimap.update();
     }
 
     updateMenuCoins(coins) {
@@ -114,5 +126,35 @@ export default class UIManager {
         setTimeout(() => {
             bar.style.width = '100%'; // Just fill it for visual feedback
         }, 100);
+    }
+
+    showNotification(text, color) {
+        let notif = document.getElementById('notification-overlay');
+        if (!notif) {
+            notif = document.createElement('div');
+            notif.id = 'notification-overlay';
+            notif.style.position = 'absolute';
+            notif.style.top = '15%';
+            notif.style.left = '50%';
+            notif.style.transform = 'translate(-50%, -50%)';
+            notif.style.fontSize = '24px';
+            notif.style.fontWeight = 'bold';
+            notif.style.fontFamily = 'Montserrat, sans-serif';
+            notif.style.textShadow = '0 0 10px #000';
+            notif.style.zIndex = '1000';
+            notif.style.pointerEvents = 'none';
+            notif.style.transition = 'opacity 0.5s';
+            document.body.appendChild(notif);
+        }
+
+        notif.textContent = text;
+        notif.style.color = color || '#fff';
+        notif.style.opacity = '1';
+
+        // Clear previous timeout if any? A bit complex to track without variable.
+        // Simple overlap is fine.
+        setTimeout(() => {
+            notif.style.opacity = '0';
+        }, 3000);
     }
 }

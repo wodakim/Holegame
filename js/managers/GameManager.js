@@ -1,5 +1,6 @@
 import Player from '../entities/Player.js';
 import Bot from '../entities/Bot.js';
+import PoliceBot from '../entities/PoliceBot.js';
 import Prop from '../entities/Prop.js';
 import PowerUp from '../entities/PowerUp.js';
 import Particle from '../entities/Particle.js';
@@ -26,16 +27,22 @@ export default class GameManager {
         this.gameTime = 120; // 2 minutes
 
         // Configuration
-        this.botCount = 5;
-        this.propCount = 200;
-        this.worldSize = 2000;
+        this.botCount = 10; // Increased bots for larger map
+        this.propCount = 1000; // Increased props for larger map
+        this.worldSize = 4000; // Larger Map
+
+        this.policeCount = 0;
+        this.maxPolice = 2;
+        this.policeSpawnTimer = 0;
 
         this.killStreak = 0;
         this.lastKillTime = 0;
         this.slowMoTimer = 0;
+        this.paused = false;
     }
 
     startGame() {
+        this.paused = false;
         this.app.soundManager.init(); // User gesture required
         this.state = 'PLAYING';
         this.score = 0;
@@ -59,10 +66,8 @@ export default class GameManager {
             this.spawnBot();
         }
 
-        // Create Props
-        for (let i = 0; i < this.propCount; i++) {
-            this.spawnProp();
-        }
+        // Create Props (Clustered)
+        this.spawnInitialProps();
 
         // Reset Camera
         this.camera.x = 0;
@@ -72,16 +77,13 @@ export default class GameManager {
 
     update(dt) {
         if (this.state !== 'PLAYING') return;
+        if (this.paused) return; // Pause Logic
 
         // Handle SlowMo Recovery
         if (this.slowMoTimer > 0) {
-            this.slowMoTimer -= dt; // dt is scaled, so this is tricky.
-            // Actually gameLoop scales dt passed here.
-            // If timeScale is 0.2, dt is 0.2 * 0.016.
-            // So we need to use real time for timer?
-            // Let's just increment timeScale back to 1 linearly.
+            this.slowMoTimer -= dt;
             if (this.app.gameLoop.timeScale < 1.0) {
-                 this.app.gameLoop.timeScale += 0.05; // Ramp up
+                 this.app.gameLoop.timeScale += 0.05;
                  if (this.app.gameLoop.timeScale > 1.0) this.app.gameLoop.timeScale = 1.0;
             }
         }
@@ -100,7 +102,7 @@ export default class GameManager {
         this.physics.update(dt, this.entities, (eater, eaten) => {
             // Sound & Feedback
             if (eater === this.player) {
-                if (eaten.propType === 'police') {
+                if (eaten.propType === 'police' || (eaten.type === 'bot' && eaten.isPolice)) {
                     // BAD
                     this.app.soundManager.play('eatLarge');
                     this.spawnFloatingText(eater.x, eater.y, "CURED!", '#ff0000', 30);
@@ -128,8 +130,8 @@ export default class GameManager {
                 }
             }
 
-            // Particles
-            const pCount = eaten.type === 'hole' ? 20 : (eaten.value > 10 ? 15 : 8);
+            // Particles (Reduced count)
+            const pCount = eaten.type === 'hole' ? 10 : (eaten.value > 10 ? 5 : 2);
             this.spawnParticles(eaten.x, eaten.y, eaten.color, pCount);
 
             // Camera Shake for large eats
@@ -140,7 +142,7 @@ export default class GameManager {
                     this.handlePlayerKill(eaten);
                 }
             } else if (eaten.value && eaten.value > 10) {
-                this.camera.shake(10);
+                this.camera.shake(5);
             }
         });
 
@@ -154,9 +156,7 @@ export default class GameManager {
             this.camera.follow(this.player, dt);
 
             // Adjust Zoom based on player size
-            // Target Zoom = 1 / (player.radius / 40)
-            // Or logarithmic scaling
-            const targetZoom = Math.max(0.2, 1 - (this.player.radius - 40) / 500);
+            const targetZoom = Math.max(0.2, 1 - (this.player.radius - 40) / 1000); // Smoother zoom for large map
             this.camera.setTargetZoom(targetZoom);
         }
 
@@ -165,6 +165,9 @@ export default class GameManager {
             if (entity.type === 'hole' && entity !== this.player) {
                 // Pass all entities to bot for AI decision
                 entity.update(dt, this.entities);
+            } else if (entity.type === 'bot' && entity.isPolice) {
+                 // Police update
+                 entity.update(dt, this.entities);
             }
         });
 
@@ -174,12 +177,7 @@ export default class GameManager {
         // Respawn Bots
         const currentBots = this.entities.filter(e => e.type === 'hole' && e !== this.player).length;
         if (currentBots < this.botCount) {
-             // 10% chance to spawn bot per frame? No, spawn immediately or with delay?
-             // Simple: immediate respawn for constant action
              this.spawnBot();
-             // Add kill to whoever killed it?
-             // Logic for kill credit is in Physics, we need to track it there.
-             // For now, if player size increases significantly, assume kill.
         }
 
         // Respawn Props
@@ -189,7 +187,7 @@ export default class GameManager {
         }
 
         // Spawn Powerups (Rare)
-        if (Math.random() < 0.005) { // 0.5% chance per frame (~1 every 3s at 60fps)
+        if (Math.random() < 0.005) {
             this.spawnPowerUp();
         }
 
@@ -200,6 +198,45 @@ export default class GameManager {
 
         // 5. Update HUD
         this.updateHUD();
+
+        // 6. Check Police Spawn
+        this.checkPoliceSpawn(dt);
+    }
+
+    checkPoliceSpawn(dt) {
+        // Only spawn if player is big enough
+        if (!this.player || this.player.markedForDeletion) return;
+
+        if (this.player.score > 500) { // Threshold for police attention
+             this.policeSpawnTimer += dt;
+
+             // Check current police count
+             const currentPolice = this.entities.filter(e => e.isPolice).length;
+
+             if (currentPolice < this.maxPolice && this.policeSpawnTimer > 10) { // Every 10s check
+                 this.spawnPolice();
+                 this.policeSpawnTimer = 0;
+             }
+        }
+    }
+
+    spawnPolice() {
+        // Spawn relative to player but not too close
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 800 + Math.random() * 400;
+        const x = this.player.x + Math.cos(angle) * dist;
+        const y = this.player.y + Math.sin(angle) * dist;
+
+        // Clamp to world
+        const clampedX = Math.max(-this.worldSize/2, Math.min(this.worldSize/2, x));
+        const clampedY = Math.max(-this.worldSize/2, Math.min(this.worldSize/2, y));
+
+        const police = new PoliceBot(clampedX, clampedY, 60); // Slightly larger than start
+        this.entities.push(police);
+
+        // Announce
+        this.app.uiManager.showNotification("POLICE ALERT!", "#ff0000");
+        this.app.soundManager.play('siren'); // Assuming sound manager handles this, or generic alert
     }
 
     spawnBot() {
@@ -217,11 +254,10 @@ export default class GameManager {
                 dist = 9999;
             }
             attempts++;
-        } while (dist < 400 && attempts < 10);
+        } while (dist < 800 && attempts < 10); // Don't spawn too close
 
-        const names = ['VoidWalker', 'Eater_X', 'NoBrainer', 'Destroyer99', 'AbyssKing', 'NullPtr'];
+        const names = ['VoidWalker', 'Eater_X', 'NoBrainer', 'Destroyer99', 'AbyssKing', 'NullPtr', 'GlitchUser', 'System32'];
         const name = names[Math.floor(Math.random() * names.length)];
-        // Random color
         const colors = ['#ff00ff', '#39ff14', '#ffae00', '#00f3ff', '#ff3333'];
         const color = colors[Math.floor(Math.random() * colors.length)];
 
@@ -229,32 +265,47 @@ export default class GameManager {
         this.entities.push(bot);
     }
 
+    spawnInitialProps() {
+        // Generate "City Blocks"
+        const blockSize = 400;
+        const blocks = Math.floor(this.worldSize / blockSize);
+
+        for (let i = 0; i < this.propCount; i++) {
+             this.spawnProp();
+        }
+    }
+
     spawnProp() {
+        // More intelligent spawning:
+        // 1. Pick a random grid cell (City Block)
+        // 2. Spawn inside it
+
         const x = (Math.random() - 0.5) * this.worldSize;
         const y = (Math.random() - 0.5) * this.worldSize;
 
-        // Determine type based on rarity or random
         const rand = Math.random();
         let type, width, height, color, value;
 
-        if (rand < 0.6) { // 60% Cones/Barrels
-            type = 'cone';
-            width = 10;
-            height = 10;
-            color = '#ffae00';
-            value = 1;
-        } else if (rand < 0.9) { // 30% Cars
+        // Increased building chance (30%)
+        if (rand < 0.3) {
+            type = 'building';
+            width = 50 + Math.random() * 50;
+            height = 50 + Math.random() * 50;
+            const bColors = ['#00ffff', '#ff00ff', '#39ff14', '#ffffff'];
+            color = bColors[Math.floor(Math.random() * bColors.length)];
+            value = 20 + Math.floor(width/10);
+        } else if (rand < 0.6) { // 30% Cars/Traffic (Static parked cars)
             type = 'car';
             width = 20;
             height = 30;
             color = Math.random() > 0.5 ? '#cc0000' : '#0000cc';
             value = 5;
-        } else { // 10% Buildings
-            type = 'building';
-            width = 50;
-            height = 50;
-            color = '#00ffff'; // Neon Cyan Building
-            value = 20;
+        } else { // 40% Small Objects (Cones, Barrels, Boxes)
+            type = 'cone';
+            width = 10;
+            height = 10;
+            color = '#ffae00';
+            value = 1;
         }
 
         const prop = new Prop(x, y, type, value, width, height, color);
@@ -272,18 +323,16 @@ export default class GameManager {
     handlePlayerKill(victim) {
         this.kills++;
         const now = Date.now();
-        if (now - this.lastKillTime < 5000) { // 5s window
+        if (now - this.lastKillTime < 5000) {
             this.killStreak++;
         } else {
             this.killStreak = 1;
         }
         this.lastKillTime = now;
 
-        // Slow Mo Impact
         this.app.gameLoop.timeScale = 0.2;
-        this.slowMoTimer = 0.5; // Real seconds approx
+        this.slowMoTimer = 0.5;
 
-        // Announcer Text
         let text = "KILL!";
         let color = "#fff";
         let size = 30;
@@ -292,7 +341,6 @@ export default class GameManager {
         if (this.killStreak === 3) { text = "TRIPLE KILL!"; color = "#ff00ff"; size = 50; }
         if (this.killStreak >= 4) { text = "RAMPAGE!"; color = "#ff0000"; size = 60; }
 
-        // Spawn big floating text at center of screen (relative to camera? No, world pos of kill)
         this.spawnFloatingText(this.player.x, this.player.y - 50, text, color, size);
     }
 
@@ -310,52 +358,64 @@ export default class GameManager {
         if (!this.player) return;
 
         const holes = this.entities.filter(e => e.type === 'hole');
+        // Pass entities for Minimap if needed, or Minimap accesses gameManager
         this.app.uiManager.updateHUD(this.gameTime, this.player.score, this.kills, holes, this.player);
     }
 
     gameOver() {
         this.state = 'GAMEOVER';
 
-        // Calculate Rank
         const holes = this.entities.filter(e => e.type === 'hole');
         holes.sort((a, b) => b.radius - a.radius);
-        const rank = holes.indexOf(this.player) + 1 || holes.length + 1; // Approx rank
+        const rank = holes.indexOf(this.player) + 1 || holes.length + 1;
 
-        // Check Missions
-        // For 'reach_mass', check max radius achieved? Or current score?
-        // Let's check current score (mass)
         if (this.player.score > 5000) this.missionManager.onEvent('reach_mass', 5000);
 
         const missionReward = this.missionManager.checkCompletion();
 
-        // Save Coins
-        const coinsEarned = Math.floor(this.player.score / 10) + missionReward; // 1 coin per 10 score + Missions
+        const coinsEarned = Math.floor(this.player.score / 10) + missionReward;
         this.app.saveManager.addCoins(coinsEarned);
 
-        // High Score
         if (this.player.score > this.app.saveManager.getHighScore()) {
             this.app.saveManager.setHighScore(this.player.score);
         }
 
-        // Show UI
         this.app.uiManager.showGameOver(rank, coinsEarned);
     }
 
     revivePlayer() {
-        // Watch Ad Logic
         this.app.adManager.showRewardedAd(() => {
-             // Respawn player
              this.player.markedForDeletion = false;
-             this.player.radius = 40; // Reset size? Or keep? usually keep but penalty?
+             this.player.radius = 40;
              this.player.x = (Math.random() - 0.5) * this.worldSize;
              this.player.y = (Math.random() - 0.5) * this.worldSize;
              this.entities.push(this.player);
 
              this.state = 'PLAYING';
-             this.gameTime += 30; // Extra time?
+             this.gameTime += 30;
 
-             // UI back to HUD
              this.app.uiManager.switchScreen('hud');
         });
+    }
+
+    pauseGame() {
+        if (this.state === 'PLAYING') {
+            this.paused = true;
+            this.app.uiManager.switchScreen('pause');
+        }
+    }
+
+    resumeGame() {
+        this.paused = false;
+        this.app.uiManager.switchScreen('hud');
+    }
+
+    quitGame() {
+        this.state = 'MENU';
+        this.paused = false;
+        this.entities = [];
+        this.player = null;
+        this.app.uiManager.switchScreen('menu');
+        this.app.saveManager.updateUI();
     }
 }

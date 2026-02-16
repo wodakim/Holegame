@@ -242,6 +242,26 @@ button {
     pointer-events: none; /* Crucial: Let touches pass */
 }
 
+.btn-icon {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    pointer-events: auto;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+}
+
 .hud-top-left, .hud-top-center, .hud-top-right {
     position: absolute;
     top: 15px;
@@ -256,7 +276,8 @@ button {
 
 .hud-top-left {
     left: 15px;
-    max-width: 150px; /* Prevent overlap */
+    top: 70px; /* Below pause button */
+    max-width: 150px;
 }
 
 .hud-top-center {

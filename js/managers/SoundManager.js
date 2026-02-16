@@ -58,6 +58,20 @@ export default class SoundManager {
             osc.start(now);
             osc.stop(now + 0.5);
         }
+        else if (type === 'siren') {
+            // Police Siren
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.5);
+            osc.frequency.linearRampToValueAtTime(600, now + 1.0);
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.3, now + 1.0);
+            gain.gain.linearRampToValueAtTime(0, now + 1.5);
+
+            osc.start(now);
+            osc.stop(now + 1.5);
+        }
     }
 
     startDrone() {

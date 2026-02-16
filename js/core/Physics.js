@@ -119,6 +119,15 @@ export default class Physics {
                 // Requirement: Must be bigger to eat
                 if (dist < hole.radius) {
                     if (hole.radius > otherHole.radius * 1.05) { // 5% bigger buffer
+
+                         // Special Logic: Police Cures (Shrinks) Player
+                         if (otherHole.isPolice) {
+                             hole.shrink(20); // Penalty
+                             otherHole.markedForDeletion = true;
+                             if (onEat) onEat(hole, otherHole); // Trigger "CURED!"
+                             return;
+                         }
+
                          otherHole.markedForDeletion = true;
                          // Reward: 1/3 of victim's points
                          const reward = Math.floor(otherHole.score / 3);

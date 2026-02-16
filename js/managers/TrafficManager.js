@@ -16,7 +16,7 @@ export default class TrafficManager {
         // Spawn Traffic
         if (this.spawnTimer > 1.0) { // Every 1s check
             if (this.cars.length < this.maxCars) {
-                this.spawnCar();
+                this.spawnVehicle();
             }
             this.spawnTimer = 0;
         }
@@ -31,16 +31,41 @@ export default class TrafficManager {
         });
     }
 
-    spawnCar() {
+    spawnVehicle() {
         const isHorizontal = Math.random() > 0.5;
         // Align to grid (multiple of 200)
-        // Range -1000 to 1000 (if world is 2000)
+        // Range -1000 to 1000 (if world is 2000, now 4000)
         const lines = Math.floor(this.worldSize / this.roadSpacing);
         const lineIndex = Math.floor(Math.random() * lines) - Math.floor(lines/2);
         const lanePos = lineIndex * this.roadSpacing;
 
         const direction = Math.random() > 0.5 ? 1 : -1;
-        const speed = 150 + Math.random() * 100;
+
+        // Determine Type
+        const rand = Math.random();
+        let type = 'car';
+        let width = 20;
+        let height = 30; // Length
+        let speed = 150 + Math.random() * 100;
+        let color = Math.random() > 0.5 ? '#ff0055' : '#0055ff';
+
+        if (rand < 0.2) { // 20% Truck
+            type = 'truck';
+            width = 25;
+            height = 60;
+            speed = 100 + Math.random() * 50;
+            color = '#ffffff'; // White trucks
+        } else if (rand < 0.4) { // 20% Bus
+            type = 'bus';
+            width = 25;
+            height = 50;
+            speed = 120 + Math.random() * 60;
+            color = '#ffae00'; // School bus yellow
+        } else {
+            // Cars can be varied colors
+            const carColors = ['#ff0055', '#0055ff', '#00ffaa', '#aa00ff'];
+            color = carColors[Math.floor(Math.random() * carColors.length)];
+        }
 
         let x, y, vx, vy, rotation;
 
@@ -57,17 +82,13 @@ export default class TrafficManager {
             vy = direction * speed;
             rotation = direction > 0 ? Math.PI/2 : -Math.PI/2;
         }
-        // Chance for Police Car (10%)
-        const isPolice = Math.random() < 0.1;
-        const type = isPolice ? 'police' : 'car';
-        const color = isPolice ? '#000000' : (Math.random() > 0.5 ? '#ff0055' : '#0055ff');
 
-        const car = new Prop(x, y, type, isPolice ? 0 : 5, 20, 30, color);
-        car.velocity = { x: isPolice ? vx * 1.5 : vx, y: isPolice ? vy * 1.5 : vy }; // Police faster
-        car.rotation = rotation;
-        car.isTraffic = true;
+        const vehicle = new Prop(x, y, type, 5, width, height, color);
+        vehicle.velocity = { x: vx, y: vy };
+        vehicle.rotation = rotation;
+        vehicle.isTraffic = true;
 
-        this.cars.push(car);
-        this.gameManager.entities.push(car);
+        this.cars.push(vehicle);
+        this.gameManager.entities.push(vehicle);
     }
 }

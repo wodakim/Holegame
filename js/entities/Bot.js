@@ -10,6 +10,8 @@ export default class Bot extends Hole {
     }
 
     update(dt, entities) {
+        super.update(dt);
+
         // AI Logic
         // 1. Scan environment
         let closestThreat = null;
