@@ -16,12 +16,13 @@ export default class Camera {
         // We want camera.x, camera.y to be the top-left of the viewport in world coords?
         // Or just the center point? Let's treat camera.x/y as the center point of the view.
 
-        const lerpFactor = 5 * dt; // Adjust for smoothness
+        // Heavier camera feel (Juicy Lag)
+        const lerpFactor = 3 * dt;
         this.x += (target.x - this.x) * lerpFactor;
         this.y += (target.y - this.y) * lerpFactor;
 
-        // Zoom smoothing
-        const zoomLerp = 2 * dt;
+        // Cinematic Zoom smoothing
+        const zoomLerp = 1 * dt;
         this.zoom += (this.targetZoom - this.zoom) * zoomLerp;
 
         // Apply shake decay

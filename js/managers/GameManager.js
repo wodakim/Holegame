@@ -117,8 +117,8 @@ export default class GameManager {
                 }
                 else if (eaten.type === 'hole') {
                     this.app.soundManager.play('eatLarge');
-                    const value = Math.floor(eaten.radius);
-                    this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
+                    const reward = Math.floor(eaten.score / 3);
+                    this.spawnFloatingText(eaten.x, eaten.y, `+${reward > 0 ? reward : 10}`, '#39ff14');
                     // Mission: Kill Hole
                     this.missionManager.onEvent('kill_hole');
                 }
@@ -129,17 +129,18 @@ export default class GameManager {
             }
 
             // Particles
-            this.spawnParticles(eaten.x, eaten.y, eaten.color);
+            const pCount = eaten.type === 'hole' ? 20 : (eaten.value > 10 ? 15 : 8);
+            this.spawnParticles(eaten.x, eaten.y, eaten.color, pCount);
 
             // Camera Shake for large eats
             if (eaten.type === 'hole') {
-                this.camera.shake(10);
+                this.camera.shake(25);
                 // Kill Logic
                 if (eater === this.player) {
                     this.handlePlayerKill(eaten);
                 }
             } else if (eaten.value && eaten.value > 10) {
-                this.camera.shake(5);
+                this.camera.shake(10);
             }
         });
 
@@ -295,8 +296,8 @@ export default class GameManager {
         this.spawnFloatingText(this.player.x, this.player.y - 50, text, color, size);
     }
 
-    spawnParticles(x, y, color) {
-        for (let i = 0; i < 5; i++) {
+    spawnParticles(x, y, color, amount = 10) {
+        for (let i = 0; i < amount; i++) {
             this.entities.push(new Particle(x, y, color));
         }
     }

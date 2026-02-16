@@ -26,91 +26,115 @@ export default class Prop extends Entity {
         ctx.scale(this.scale, this.scale);
 
         if (this.propType === 'cone') {
-            // Small Orange Circle with inner dot
-            ctx.fillStyle = '#ffae00'; // Orange
+            // Isometric Cone (Triangle + Ellipse base)
+            ctx.fillStyle = '#ffae00';
             ctx.beginPath();
-            ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+            ctx.moveTo(0, -this.height/2);
+            ctx.lineTo(this.width/2, this.height/2);
+            ctx.lineTo(-this.width/2, this.height/2);
+            ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = '#ffa';
+            // Base shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.beginPath();
-            ctx.arc(0, 0, this.width / 4, 0, Math.PI * 2);
+            ctx.ellipse(0, this.height/2, this.width/2, this.width/4, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        else if (this.propType === 'car') {
-            // Rounded Rectangle with gradient
-            const w = this.width;
-            const h = this.height;
+        else if (this.propType === 'car' || this.propType === 'police') {
+            // Ensure Length is along X (w)
+            const w = Math.max(this.width, this.height);
+            const h = Math.min(this.width, this.height);
+            const isPolice = this.propType === 'police';
 
-            // Gradient
-            const grad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2);
-            grad.addColorStop(0, this.color);
-            grad.addColorStop(1, '#000'); // Shadow side
+            // Headlights (Yellow Cones) - Facing Right (0 deg)
+            // Assuming car length is along X axis? No, width/height passed usually w < h for vertical car?
+            // Let's assume car is drawn facing UP (-Y) or RIGHT (+X).
+            // Usually car sprites face UP. But rotation aligns them.
+            // Let's draw car facing RIGHT (+X).
 
-            ctx.fillStyle = grad;
+            // Headlights (Refined)
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.15)'; // Slightly more transparent
+            ctx.beginPath();
+            // Narrower and shorter beam
+            const beamLength = 100;
+            const beamSpread = h * 1.5;
 
-            // Draw rounded rect
-            this.roundRect(ctx, -w/2, -h/2, w, h, 5);
+            ctx.moveTo(w/2, -h/3);
+            ctx.lineTo(w/2 + beamLength, -beamSpread);
+            ctx.arc(w/2, 0, beamLength, -Math.PI/6, Math.PI/6); // Narrower Cone (30 deg)
+            ctx.lineTo(w/2, h/3);
             ctx.fill();
 
-            // Windshield (Black rect)
-            ctx.fillStyle = '#111';
-            this.roundRect(ctx, -w/4, -h/4, w/2, h/2, 2);
+            // Taillights (Red Glow)
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(-w/2, 0, 20, 0, Math.PI * 2);
             ctx.fill();
-        }
-        else if (this.propType === 'police') {
-             const w = this.width;
-             const h = this.height;
 
-             // Base
-             ctx.fillStyle = '#1a1a1a';
-             this.roundRect(ctx, -w/2, -h/2, w, h, 5);
-             ctx.fill();
+            // Car Body
+            ctx.fillStyle = this.color;
+            if (isPolice) ctx.fillStyle = '#111'; // Black/White for police
 
-             // Lights (Flash)
-             const blink = Math.floor(Date.now() / 200) % 2 === 0;
-             ctx.fillStyle = blink ? '#ff0000' : '#0000ff';
-             this.roundRect(ctx, -w/2, -h/2, w, h/3, 2); // Top bar
-             ctx.fill();
+            // Chassis
+            this.roundRect(ctx, -w/2, -h/2, w, h, 8);
+            ctx.fill();
 
-             ctx.fillStyle = !blink ? '#ff0000' : '#0000ff';
-             this.roundRect(ctx, -w/2, h/2 - h/3, w, h/3, 2); // Bottom bar
-             ctx.fill();
+            // Roof / Windshield (Darker)
+            ctx.fillStyle = '#222';
+            this.roundRect(ctx, -w/4, -h/2 + 5, w/2, h - 10, 4);
+            ctx.fill();
 
-             ctx.shadowBlur = 20;
-             ctx.shadowColor = blink ? '#ff0000' : '#0000ff';
+            if (isPolice) {
+                // Siren Lights
+                const blink = Math.floor(Date.now() / 150) % 2 === 0;
+                ctx.shadowBlur = 20;
+
+                ctx.fillStyle = blink ? '#ff0000' : '#0000ff';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.fillRect(-5, -h/4, 10, h/2);
+
+                ctx.shadowBlur = 0;
+            }
         }
         else if (this.propType === 'building') {
-            // Extruded Polygon (2.5D)
+            // Isometric 3D Effect
             const w = this.width;
             const h = this.height;
-            const depth = 20; // Height of building
+            const depth = 40; // Simulated height
 
-            // Draw Sides (Darker)
-            ctx.fillStyle = '#1a1a1a'; // Dark grey side
+            // 1. Draw Side (The "Wall" going down)
+            // Shifted down by depth
+            ctx.fillStyle = '#0a0a0a'; // Very dark wall
             ctx.beginPath();
-            ctx.rect(-w/2, -h/2, w, h);
+            ctx.moveTo(-w/2, -h/2);
+            ctx.lineTo(w/2, -h/2);
+            ctx.lineTo(w/2, h/2 + depth); // Bottom Right projected
+            ctx.lineTo(-w/2, h/2 + depth); // Bottom Left projected
+            ctx.closePath();
             ctx.fill();
 
-            // Draw Roof (Offset)
-            // The "roof" should be offset based on camera perspective?
-            // For now, static offset looks okay for simple "top down"
-            // Wait, standard top down doesn't show sides unless perspective.
-            // Let's just draw a nice neon rect with inner details.
+            // 2. Draw Roof (The Neon Top)
+            // Drawn at normal position (x,y)
+            ctx.fillStyle = '#111';
+            ctx.fillRect(-w/2, -h/2, w, h);
 
+            // Neon Edge
             ctx.strokeStyle = this.color;
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 10;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
             ctx.shadowColor = this.color;
-
             ctx.strokeRect(-w/2, -h/2, w, h);
 
-            // Inner grid (windows)
+            // Windows / Grid on Roof
             ctx.fillStyle = this.color;
-            ctx.globalAlpha = 0.3;
-            ctx.fillRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10);
+            ctx.globalAlpha = 0.5;
+            // Simple grid pattern
+            for(let i=1; i<4; i++) {
+                ctx.fillRect(-w/2 + (w/4)*i, -h/2, 2, h);
+                ctx.fillRect(-w/2, -h/2 + (h/4)*i, w, 2);
+            }
             ctx.globalAlpha = 1.0;
-
             ctx.shadowBlur = 0;
         }
 

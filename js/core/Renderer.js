@@ -123,51 +123,88 @@ export default class Renderer {
     }
 
     drawHoleRim(entity) {
-        // Draw Trail first
+        // 1. Draw Depth Gradient (Inner Shadow)
+        // This gives the illusion of a deep pit
+        const depthGrad = this.ctx.createRadialGradient(entity.x, entity.y, entity.radius * 0.7, entity.x, entity.y, entity.radius);
+        depthGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        depthGrad.addColorStop(0.8, 'rgba(0,0,0,0.4)');
+        depthGrad.addColorStop(1, 'rgba(0,0,0,0.8)');
+
+        this.ctx.fillStyle = depthGrad;
+        this.ctx.beginPath();
+        this.ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 2. Draw Trail
         if (entity.trail) {
             entity.trail.forEach(t => {
                 this.ctx.globalAlpha = t.a * 0.3;
                 this.ctx.beginPath();
-                this.drawShape(t.x, t.y, t.r, entity.shape);
+                this.drawShape(0, 0, t.r, entity.shape, t.x, t.y); // Pass coords
                 this.ctx.fillStyle = entity.color;
                 this.ctx.fill();
             });
             this.ctx.globalAlpha = 1.0;
         }
 
-        // The neon glow/ring around the hole
-        this.ctx.beginPath();
-        this.drawShape(entity.x, entity.y, entity.radius, entity.shape);
+        // 3. Draw Neon Rings (Animated)
+        const time = Date.now() * 0.001;
 
-        this.ctx.strokeStyle = entity.color || '#00f3ff'; // Default Cyan
+        this.ctx.save();
+        this.ctx.translate(entity.x, entity.y);
+
+        // Ring 1: Main Glow (Rotates slowly)
+        this.ctx.rotate(time);
+        this.ctx.beginPath();
+        this.drawShape(0, 0, entity.radius, entity.shape, 0, 0); // Local coords 0,0
+
+        this.ctx.strokeStyle = entity.color || '#00f3ff';
         this.ctx.lineWidth = 5;
         this.ctx.shadowBlur = 20;
         this.ctx.shadowColor = entity.color || '#00f3ff';
         this.ctx.stroke();
 
-        // Reset shadow
-        this.ctx.shadowBlur = 0;
+        // Ring 2: Inner Detail (Rotates fast opposite)
+        this.ctx.rotate(-time * 2.5);
+        this.ctx.beginPath();
+        this.drawShape(0, 0, entity.radius * 0.85, entity.shape, 0, 0);
+        this.ctx.lineWidth = 2;
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.stroke();
 
-        // Draw Name
+        this.ctx.restore();
+
+        // 4. Draw Name
         if (entity.name) {
             this.ctx.fillStyle = '#fff';
             this.ctx.font = 'bold 16px Montserrat';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(entity.name, entity.x, entity.y - entity.radius - 15);
+            this.ctx.shadowBlur = 4;
+            this.ctx.shadowColor = '#000';
+            this.ctx.fillText(entity.name, entity.x, entity.y - entity.radius - 20);
+            this.ctx.shadowBlur = 0;
         }
     }
 
-    drawShape(x, y, r, type) {
+    // Updated to accept coordinates explicitly or default
+    drawShape(x, y, r, type, cx = x, cy = y) {
+        // If cx, cy are passed, use them (for local transform)
+        // But the original method used x,y.
+        // My new call passes 0,0 as x,y and relies on translate.
+        // The Trail calls passed t.x, t.y.
+
+        // Let's standardise: x,y are center.
+
         if (type === 'square') {
-            const side = r * Math.sqrt(2); // Keep area roughly same as circle
-            this.ctx.rect(x - side/2, y - side/2, side, side);
+            const side = r * Math.sqrt(2);
+            this.ctx.rect(cx - side/2, cy - side/2, side, side);
         } else if (type === 'star') {
-            this.drawStar(x, y, 5, r, r/2);
+            this.drawStar(cx, cy, 5, r, r/2);
         } else if (type === 'gear') {
-             this.drawGear(x, y, 8, r, r * 0.8);
+             this.drawGear(cx, cy, 8, r, r * 0.8);
         } else {
-            // Circle default
-            this.ctx.arc(x, y, r, 0, Math.PI * 2);
+            this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
         }
     }
 

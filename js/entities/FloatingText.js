@@ -10,16 +10,27 @@ export default class FloatingText extends Entity {
         this.velocity = { x: 0, y: -50 }; // Float up
         this.opacity = 1.0;
 
-        // Pop animation
+        // Pop animation (Juicy Bounce)
         this.scale = 0;
-        this.targetScale = 1;
+        this.targetScale = 1.2; // Overshoot
+        this.settleScale = 1.0;
+        this.popPhase = 0; // 0: Growing, 1: Shrinking
     }
 
     update(dt) {
-        // Pop in
-        if (this.scale < this.targetScale) {
-            this.scale += dt * 5;
-            if (this.scale > this.targetScale) this.scale = this.targetScale;
+        // Pop Logic
+        if (this.popPhase === 0) {
+            this.scale += dt * 10; // Fast grow
+            if (this.scale >= this.targetScale) {
+                this.scale = this.targetScale;
+                this.popPhase = 1;
+            }
+        } else if (this.popPhase === 1) {
+            this.scale -= dt * 2; // Slow settle
+            if (this.scale <= this.settleScale) {
+                this.scale = this.settleScale;
+                this.popPhase = 2; // Done
+            }
         }
 
         this.life -= dt;

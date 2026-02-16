@@ -106,6 +106,7 @@ export default class Physics {
             // Hole vs Hole
             holes.forEach(otherHole => {
                 if (hole === otherHole) return;
+                if (hole.markedForDeletion || otherHole.markedForDeletion) return;
 
                 // Shield check
                 if (otherHole.activePowerUps && otherHole.activePowerUps['shield']) return;
@@ -114,10 +115,14 @@ export default class Physics {
                 const dy = hole.y - otherHole.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
+                // Eat Range: Distance < Radius
+                // Requirement: Must be bigger to eat
                 if (dist < hole.radius) {
-                    if (hole.radius > otherHole.radius * 1.1) { // 10% bigger to eat
-                         otherHole.markedForDeletion = true; // Respawn?
-                         hole.grow(otherHole.radius * 0.5); // Grow by half their radius
+                    if (hole.radius > otherHole.radius * 1.05) { // 5% bigger buffer
+                         otherHole.markedForDeletion = true;
+                         // Reward: 1/3 of victim's points
+                         const reward = Math.floor(otherHole.score / 3);
+                         hole.grow(reward > 0 ? reward : 10); // Minimum 10 points
                          if (onEat) onEat(hole, otherHole);
                     }
                 }
