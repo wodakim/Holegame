@@ -10,22 +10,23 @@ export default class Particle extends Entity {
             x: Math.cos(angle) * speed,
             y: Math.sin(angle) * speed
         };
-        this.life = 1.0; // Seconds
-        this.decay = 1.0 + Math.random(); // Decay rate
+        this.life = 0.5; // Shorter life for snappier feel
+        this.decay = 2.0 + Math.random(); // Decay rate
+        this.originalRadius = this.radius;
     }
 
     update(dt) {
-        this.life -= this.decay * dt;
+        this.life -= dt;
         if (this.life <= 0) {
             this.markedForDeletion = true;
         }
 
-        // Move
+        // Move (Add friction?)
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
 
-        // Shrink
-        this.scale = this.life;
+        // Shrink faster at end
+        this.radius = this.originalRadius * (this.life / 0.5);
     }
 
     draw(ctx) {

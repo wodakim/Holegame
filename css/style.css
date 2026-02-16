@@ -58,13 +58,13 @@ body {
         radial-gradient(2px 2px at 130px 80px, #ffffff, rgba(0,0,0,0));
     background-repeat: repeat;
     background-size: 200px 200px;
-    opacity: 0.3;
-    animation: drift 60s linear infinite;
+    opacity: 0.15; /* Reduced opacity */
+    animation: drift 120s linear infinite; /* Slower animation */
 }
 
 @keyframes drift {
     from { transform: translate(0, 0); }
-    to { transform: translate(-50%, -50%); }
+    to { transform: translate(-10%, -10%); } /* Reduced drift distance */
 }
 
 

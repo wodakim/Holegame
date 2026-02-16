@@ -20,7 +20,7 @@ export default class Hole extends Entity {
         // r = sqrt(NewArea / pi).
 
         const currentArea = Math.PI * this.radius * this.radius;
-        const addedArea = amount * 50; // Scale factor for visual growth
+        const addedArea = amount * 100; // Doubled growth rate for faster pacing
         const newArea = currentArea + addedArea;
         this.radius = Math.sqrt(newArea / Math.PI);
 

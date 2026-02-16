@@ -2,6 +2,7 @@ import Player from '../entities/Player.js';
 import Bot from '../entities/Bot.js';
 import Prop from '../entities/Prop.js';
 import Particle from '../entities/Particle.js';
+import FloatingText from '../entities/FloatingText.js';
 import Physics from '../core/Physics.js';
 import Camera from '../core/Camera.js';
 
@@ -82,6 +83,12 @@ export default class GameManager {
 
             // Particles
             this.spawnParticles(eaten.x, eaten.y, eaten.color);
+
+            // Floating Text
+            if (eater === this.player) {
+                const value = eaten.value || (eaten.radius ? Math.floor(eaten.radius) : 10);
+                this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
+            }
 
             // Camera Shake for large eats
             if (eaten.type === 'hole' || (eaten.value && eaten.value > 10)) {
@@ -191,6 +198,10 @@ export default class GameManager {
         for (let i = 0; i < 5; i++) {
             this.entities.push(new Particle(x, y, color));
         }
+    }
+
+    spawnFloatingText(x, y, text, color) {
+        this.entities.push(new FloatingText(x, y, text, color));
     }
 
     updateHUD() {

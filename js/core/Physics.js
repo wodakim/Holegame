@@ -48,7 +48,7 @@ export default class Physics {
                         // SUCTION LOGIC
                         // 1. Move prop towards hole center
                         const dist = Math.sqrt(distSq);
-                        const force = (hole.radius / dist) * 200 * dt; // Stronger as it gets closer
+                        const force = (hole.radius / dist) * 400 * dt; // Doubled suction force for snappiness
                         const nx = dx / dist;
                         const ny = dy / dist;
 

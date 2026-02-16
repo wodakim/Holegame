@@ -56,11 +56,19 @@ export default class Renderer {
         // Draw Shadows/Glows first?
 
         entities.forEach(entity => {
+            if (entity.type === 'floating_text') return; // Draw last
             if (entity.type !== 'hole') { // Props, particles
                 entity.draw(this.ctx);
             } else {
                 // Draw the rim/glow of the hole on top
                 this.drawHoleRim(entity);
+            }
+        });
+
+        // Draw UI entities (Floating Text) last
+        entities.forEach(entity => {
+            if (entity.type === 'floating_text') {
+                entity.draw(this.ctx);
             }
         });
 
