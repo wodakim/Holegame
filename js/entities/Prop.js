@@ -58,6 +58,28 @@ export default class Prop extends Entity {
             this.roundRect(ctx, -w/4, -h/4, w/2, h/2, 2);
             ctx.fill();
         }
+        else if (this.propType === 'police') {
+             const w = this.width;
+             const h = this.height;
+
+             // Base
+             ctx.fillStyle = '#1a1a1a';
+             this.roundRect(ctx, -w/2, -h/2, w, h, 5);
+             ctx.fill();
+
+             // Lights (Flash)
+             const blink = Math.floor(Date.now() / 200) % 2 === 0;
+             ctx.fillStyle = blink ? '#ff0000' : '#0000ff';
+             this.roundRect(ctx, -w/2, -h/2, w, h/3, 2); // Top bar
+             ctx.fill();
+
+             ctx.fillStyle = !blink ? '#ff0000' : '#0000ff';
+             this.roundRect(ctx, -w/2, h/2 - h/3, w, h/3, 2); // Bottom bar
+             ctx.fill();
+
+             ctx.shadowBlur = 20;
+             ctx.shadowColor = blink ? '#ff0000' : '#0000ff';
+        }
         else if (this.propType === 'building') {
             // Extruded Polygon (2.5D)
             const w = this.width;

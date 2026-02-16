@@ -6,12 +6,16 @@ import Particle from '../entities/Particle.js';
 import FloatingText from '../entities/FloatingText.js';
 import Physics from '../core/Physics.js';
 import Camera from '../core/Camera.js';
+import TrafficManager from './TrafficManager.js';
+import MissionManager from './MissionManager.js';
 
 export default class GameManager {
     constructor(app) {
         this.app = app;
         this.physics = new Physics();
         this.camera = new Camera();
+        this.trafficManager = new TrafficManager(this);
+        this.missionManager = new MissionManager(app.saveManager);
 
         this.entities = [];
         this.player = null;
@@ -89,29 +93,43 @@ export default class GameManager {
             return;
         }
 
-        // 2. Physics Update (Collision, Suction, Movement)
+        // 2. Update Traffic
+        this.trafficManager.update(dt);
+
+        // 3. Physics Update (Collision, Suction, Movement)
         this.physics.update(dt, this.entities, (eater, eaten) => {
-            // Sound
+            // Sound & Feedback
             if (eater === this.player) {
-                if (eaten.type === 'prop') this.app.soundManager.play('eatSmall');
-                else if (eaten.type === 'hole') this.app.soundManager.play('eatLarge');
+                if (eaten.propType === 'police') {
+                    // BAD
+                    this.app.soundManager.play('eatLarge');
+                    this.spawnFloatingText(eater.x, eater.y, "CURED!", '#ff0000', 30);
+                    this.camera.shake(20);
+                    if (navigator.vibrate) navigator.vibrate(200);
+                }
+                else if (eaten.type === 'prop') {
+                    this.app.soundManager.play('eatSmall');
+                    const value = eaten.value || 1;
+                    this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
+
+                    // Mission: Eat Car
+                    if (eaten.propType === 'car') this.missionManager.onEvent('eat_car');
+                }
+                else if (eaten.type === 'hole') {
+                    this.app.soundManager.play('eatLarge');
+                    const value = Math.floor(eaten.radius);
+                    this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
+                    // Mission: Kill Hole
+                    this.missionManager.onEvent('kill_hole');
+                }
                 else if (eaten.type === 'powerup') {
                     this.app.soundManager.play('levelUp');
                     this.spawnFloatingText(eater.x, eater.y, eaten.powerType.toUpperCase(), eaten.color);
                 }
-
-                // Haptic
-                if (navigator.vibrate) navigator.vibrate(20);
             }
 
             // Particles
             this.spawnParticles(eaten.x, eaten.y, eaten.color);
-
-            // Floating Text
-            if (eater === this.player) {
-                const value = eaten.value || (eaten.radius ? Math.floor(eaten.radius) : 10);
-                this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
-            }
 
             // Camera Shake for large eats
             if (eaten.type === 'hole') {
@@ -184,8 +202,22 @@ export default class GameManager {
     }
 
     spawnBot() {
-        const x = (Math.random() - 0.5) * this.worldSize;
-        const y = (Math.random() - 0.5) * this.worldSize;
+        let x, y, dist;
+        let attempts = 0;
+        do {
+            x = (Math.random() - 0.5) * this.worldSize;
+            y = (Math.random() - 0.5) * this.worldSize;
+
+            if (this.player && !this.player.markedForDeletion) {
+                const dx = x - this.player.x;
+                const dy = y - this.player.y;
+                dist = Math.sqrt(dx*dx + dy*dy);
+            } else {
+                dist = 9999;
+            }
+            attempts++;
+        } while (dist < 400 && attempts < 10);
+
         const names = ['VoidWalker', 'Eater_X', 'NoBrainer', 'Destroyer99', 'AbyssKing', 'NullPtr'];
         const name = names[Math.floor(Math.random() * names.length)];
         // Random color
@@ -288,8 +320,15 @@ export default class GameManager {
         holes.sort((a, b) => b.radius - a.radius);
         const rank = holes.indexOf(this.player) + 1 || holes.length + 1; // Approx rank
 
+        // Check Missions
+        // For 'reach_mass', check max radius achieved? Or current score?
+        // Let's check current score (mass)
+        if (this.player.score > 5000) this.missionManager.onEvent('reach_mass', 5000);
+
+        const missionReward = this.missionManager.checkCompletion();
+
         // Save Coins
-        const coinsEarned = Math.floor(this.player.score / 10); // 1 coin per 10 score
+        const coinsEarned = Math.floor(this.player.score / 10) + missionReward; // 1 coin per 10 score + Missions
         this.app.saveManager.addCoins(coinsEarned);
 
         // High Score

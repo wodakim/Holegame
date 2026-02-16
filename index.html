@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/warning.css">
+    <link rel="stylesheet" href="css/missions.css">
 </head>
 <body>
 
@@ -25,6 +27,17 @@
             <h1 class="game-title">URBAN VOID</h1>
             <div class="coin-display">
                 <span class="coin-icon">©</span> <span id="menu-coin-count">0</span>
+            </div>
+
+            <div id="mission-board">
+                <h3>DAILY MISSIONS</h3>
+                <ul id="mission-list">
+                    <!-- Missions injected by JS -->
+                </ul>
+            </div>
+
+            <div class="police-warning">
+                ⚠️ WARNING: POLICE CARS CARRY "VOID CURE". DO NOT EAT! ⚠️
             </div>
 
             <button id="btn-play" class="btn-primary pulse">PLAY</button>

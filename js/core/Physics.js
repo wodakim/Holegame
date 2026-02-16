@@ -9,10 +9,6 @@ export default class Physics {
             if (entity.velocity) {
                 entity.x += entity.velocity.x * dt;
                 entity.y += entity.velocity.y * dt;
-
-                // Friction/Damping for sliding objects?
-                // For holes, velocity is controlled directly.
-                // For props being sucked, they might have velocity.
             }
 
             // Boundary checks for Holes
@@ -69,6 +65,13 @@ export default class Physics {
                         const nx = dx / dist;
                         const ny = dy / dist;
 
+                        // Override traffic velocity if caught
+                        if (prop.isTraffic) {
+                            prop.velocity.x = 0;
+                            prop.velocity.y = 0;
+                            prop.isTraffic = false; // Stop driving
+                        }
+
                         prop.x += nx * force;
                         prop.y += ny * force;
 
@@ -87,7 +90,13 @@ export default class Physics {
                         // If center is close enough
                         if (dist < hole.radius * 0.5) {
                             prop.markedForDeletion = true;
-                            hole.grow(prop.value || 1);
+
+                            if (prop.propType === 'police') {
+                                hole.shrink(20); // Penalty
+                            } else {
+                                hole.grow(prop.value || 1);
+                            }
+
                             if (onEat) onEat(hole, prop);
                         }
                     }

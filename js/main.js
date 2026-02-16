@@ -35,6 +35,9 @@ class App {
         this.handleResize();
         window.addEventListener('resize', () => this.handleResize());
 
+        // 6. Initial UI Update (Now that GameManager/Missions are ready)
+        this.saveManager.updateUI();
+
         console.log("URBAN VOID: Ready.");
     }
 

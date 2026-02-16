@@ -73,6 +73,11 @@ export default class UIManager {
         const menuCoins = document.getElementById('menu-coin-count');
         if (menuCoins) menuCoins.textContent = coins;
 
+        // Update Missions if GameManager exists (might be called before init)
+        if (this.app.gameManager && this.app.gameManager.missionManager) {
+            this.updateMissions(this.app.gameManager.missionManager.getMissionsText());
+        }
+
         const shopCoins = document.getElementById('shop-coin-count');
         if (shopCoins) shopCoins.textContent = coins;
 
@@ -85,6 +90,17 @@ export default class UIManager {
                 badge.classList.add('hidden');
             }
         }
+    }
+
+    updateMissions(missions) {
+        const list = document.getElementById('mission-list');
+        if (!list) return;
+        list.innerHTML = '';
+        missions.forEach(txt => {
+            const li = document.createElement('li');
+            li.textContent = txt;
+            list.appendChild(li);
+        });
     }
 
     showGameOver(rank, coinsEarned) {
