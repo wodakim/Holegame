@@ -1,4 +1,4 @@
-import Bot from './Bot.js';
+import Bot from './bot.js';
 
 export default class PoliceBot extends Bot {
     constructor(x, y, radius) {

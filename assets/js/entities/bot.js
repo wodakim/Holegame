@@ -1,4 +1,4 @@
-import Hole from './Hole.js';
+import Hole from './hole.js';
 
 export default class Bot extends Hole {
     constructor(x, y, radius, color, name) {

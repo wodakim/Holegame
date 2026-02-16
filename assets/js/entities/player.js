@@ -1,4 +1,4 @@
-import Hole from './Hole.js';
+import Hole from './hole.js';
 
 export default class Player extends Hole {
     constructor(x, y, radius, color, name, saveManager) {
@@ -17,8 +17,8 @@ export default class Player extends Hole {
         this.velocity.x = this.inputVector.x * this.speed;
         this.velocity.y = this.inputVector.y * this.speed;
 
-        // Apply velocity (Physics.js handles position update, but we set velocity here)
-        // Wait, Physics.js iterates entities and does:
+        // Apply velocity (physics.js handles position update, but we set velocity here)
+        // Wait, physics.js iterates entities and does:
         // entity.x += entity.velocity.x * dt;
         // So we just set velocity.
     }

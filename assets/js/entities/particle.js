@@ -1,4 +1,4 @@
-import Entity from './Entity.js';
+import Entity from './entity.js';
 
 export default class Particle extends Entity {
     constructor(x, y, color) {
