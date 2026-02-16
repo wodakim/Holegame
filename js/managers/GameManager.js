@@ -1,6 +1,7 @@
 import Player from '../entities/Player.js';
 import Bot from '../entities/Bot.js';
 import Prop from '../entities/Prop.js';
+import PowerUp from '../entities/PowerUp.js';
 import Particle from '../entities/Particle.js';
 import FloatingText from '../entities/FloatingText.js';
 import Physics from '../core/Physics.js';
