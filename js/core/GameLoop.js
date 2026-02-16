@@ -7,9 +7,14 @@ export default class GameLoop {
         this.accumulator = 0;
         this.targetFPS = 60;
         this.timeStep = 1000 / this.targetFPS; // ~16.67ms
+        this.timeScale = 1.0;
 
         // Bind update loop
         this.loop = this.loop.bind(this);
+    }
+
+    setTimeScale(scale) {
+        this.timeScale = scale;
     }
 
     start() {
@@ -35,7 +40,8 @@ export default class GameLoop {
         // Limits the loop to prevent "spiral of death" if frame time is too long
         let updates = 0;
         while (this.accumulator >= this.timeStep && updates < 5) {
-            this.gameManager.update(this.timeStep / 1000); // Pass seconds
+            const dt = (this.timeStep / 1000) * this.timeScale;
+            this.gameManager.update(dt);
             this.accumulator -= this.timeStep;
             updates++;
         }

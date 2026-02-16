@@ -9,9 +9,19 @@ export default class FloatingText extends Entity {
         this.life = 1.0; // Seconds
         this.velocity = { x: 0, y: -50 }; // Float up
         this.opacity = 1.0;
+
+        // Pop animation
+        this.scale = 0;
+        this.targetScale = 1;
     }
 
     update(dt) {
+        // Pop in
+        if (this.scale < this.targetScale) {
+            this.scale += dt * 5;
+            if (this.scale > this.targetScale) this.scale = this.targetScale;
+        }
+
         this.life -= dt;
         if (this.life <= 0) {
             this.markedForDeletion = true;
@@ -28,12 +38,15 @@ export default class FloatingText extends Entity {
     draw(ctx) {
         ctx.save();
         ctx.globalAlpha = this.opacity;
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.scale, this.scale);
+
         ctx.fillStyle = this.color;
         ctx.font = `bold ${this.fontSize}px Montserrat`;
         ctx.textAlign = 'center';
         ctx.shadowColor = this.color;
         ctx.shadowBlur = 10;
-        ctx.fillText(this.text, this.x, this.y);
+        ctx.fillText(this.text, 0, 0);
         ctx.restore();
     }
 }

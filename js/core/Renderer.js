@@ -118,14 +118,27 @@ export default class Renderer {
     drawHole(entity) {
         // The actual "cut"
         this.ctx.beginPath();
-        this.ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
+        this.drawShape(entity.x, entity.y, entity.radius, entity.shape);
         this.ctx.fill();
     }
 
     drawHoleRim(entity) {
+        // Draw Trail first
+        if (entity.trail) {
+            entity.trail.forEach(t => {
+                this.ctx.globalAlpha = t.a * 0.3;
+                this.ctx.beginPath();
+                this.drawShape(t.x, t.y, t.r, entity.shape);
+                this.ctx.fillStyle = entity.color;
+                this.ctx.fill();
+            });
+            this.ctx.globalAlpha = 1.0;
+        }
+
         // The neon glow/ring around the hole
         this.ctx.beginPath();
-        this.ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
+        this.drawShape(entity.x, entity.y, entity.radius, entity.shape);
+
         this.ctx.strokeStyle = entity.color || '#00f3ff'; // Default Cyan
         this.ctx.lineWidth = 5;
         this.ctx.shadowBlur = 20;
@@ -142,5 +155,54 @@ export default class Renderer {
             this.ctx.textAlign = 'center';
             this.ctx.fillText(entity.name, entity.x, entity.y - entity.radius - 15);
         }
+    }
+
+    drawShape(x, y, r, type) {
+        if (type === 'square') {
+            const side = r * Math.sqrt(2); // Keep area roughly same as circle
+            this.ctx.rect(x - side/2, y - side/2, side, side);
+        } else if (type === 'star') {
+            this.drawStar(x, y, 5, r, r/2);
+        } else if (type === 'gear') {
+             this.drawGear(x, y, 8, r, r * 0.8);
+        } else {
+            // Circle default
+            this.ctx.arc(x, y, r, 0, Math.PI * 2);
+        }
+    }
+
+    drawStar(cx, cy, spikes, outerRadius, innerRadius) {
+        let rot = Math.PI / 2 * 3;
+        let x = cx;
+        let y = cy;
+        const step = Math.PI / spikes;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+            x = cx + Math.cos(rot) * outerRadius;
+            y = cy + Math.sin(rot) * outerRadius;
+            this.ctx.lineTo(x, y);
+            rot += step;
+
+            x = cx + Math.cos(rot) * innerRadius;
+            y = cy + Math.sin(rot) * innerRadius;
+            this.ctx.lineTo(x, y);
+            rot += step;
+        }
+        this.ctx.lineTo(cx, cy - outerRadius);
+        this.ctx.closePath();
+    }
+
+    drawGear(cx, cy, teeth, outerRadius, innerRadius) {
+        const step = (Math.PI * 2) / (teeth * 2);
+
+        for (let i = 0; i < teeth * 2; i++) {
+            const r = (i % 2 === 0) ? outerRadius : innerRadius;
+            const angle = i * step - Math.PI / 2; // Start at top
+            if (i===0) this.ctx.moveTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+            else this.ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+        }
+        this.ctx.closePath();
     }
 }

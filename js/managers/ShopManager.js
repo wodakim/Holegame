@@ -5,10 +5,12 @@ export default class ShopManager {
         this.uiManager = app.uiManager;
 
         this.skins = [
-            { id: 'default', name: 'Basic Hole', cost: 0, type: 'free', color: '#00f3ff' },
-            { id: 'neon_ring', name: 'Neon Ring', cost: 500, type: 'coins', color: '#ff00ff' },
-            { id: 'glitch', name: 'Glitch Effect', cost: 1000, type: 'coins', color: '#39ff14' },
-            { id: 'dark_mode', name: 'Void King', cost: 3, type: 'ads', color: '#ff3333' }
+            { id: 'default', name: 'Basic Hole', cost: 0, type: 'free', color: '#00f3ff', shape: 'circle' },
+            { id: 'neon_ring', name: 'Neon Ring', cost: 500, type: 'coins', color: '#ff00ff', shape: 'circle' },
+            { id: 'glitch', name: 'Glitch Effect', cost: 1000, type: 'coins', color: '#39ff14', shape: 'square' },
+            { id: 'star_power', name: 'Cyber Star', cost: 2000, type: 'coins', color: '#ffd700', shape: 'star' },
+            { id: 'mech_gear', name: 'Mech Gear', cost: 5000, type: 'coins', color: '#ff4500', shape: 'gear' },
+            { id: 'dark_mode', name: 'Void King', cost: 3, type: 'ads', color: '#ff3333', shape: 'circle' }
         ];
 
         // Grid is rendered on open

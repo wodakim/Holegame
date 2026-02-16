@@ -24,6 +24,10 @@ export default class GameManager {
         this.botCount = 5;
         this.propCount = 200;
         this.worldSize = 2000;
+
+        this.killStreak = 0;
+        this.lastKillTime = 0;
+        this.slowMoTimer = 0;
     }
 
     startGame() {
@@ -40,8 +44,9 @@ export default class GameManager {
 
         // Create Player
         // Load skin from saveManager
-        const skinColor = this.app.saveManager.getCurrentSkinColor();
-        this.player = new Player(0, 0, 40, skinColor, 'You', this.app.saveManager);
+        const skinInfo = this.app.saveManager.getCurrentSkinInfo();
+        this.player = new Player(0, 0, 40, skinInfo.color, 'You', this.app.saveManager);
+        this.player.shape = skinInfo.shape || 'circle';
         this.entities.push(this.player);
 
         // Create Bots
@@ -63,6 +68,19 @@ export default class GameManager {
     update(dt) {
         if (this.state !== 'PLAYING') return;
 
+        // Handle SlowMo Recovery
+        if (this.slowMoTimer > 0) {
+            this.slowMoTimer -= dt; // dt is scaled, so this is tricky.
+            // Actually gameLoop scales dt passed here.
+            // If timeScale is 0.2, dt is 0.2 * 0.016.
+            // So we need to use real time for timer?
+            // Let's just increment timeScale back to 1 linearly.
+            if (this.app.gameLoop.timeScale < 1.0) {
+                 this.app.gameLoop.timeScale += 0.05; // Ramp up
+                 if (this.app.gameLoop.timeScale > 1.0) this.app.gameLoop.timeScale = 1.0;
+            }
+        }
+
         // 1. Update Timer
         this.gameTime -= dt;
         if (this.gameTime <= 0) {
@@ -76,6 +94,10 @@ export default class GameManager {
             if (eater === this.player) {
                 if (eaten.type === 'prop') this.app.soundManager.play('eatSmall');
                 else if (eaten.type === 'hole') this.app.soundManager.play('eatLarge');
+                else if (eaten.type === 'powerup') {
+                    this.app.soundManager.play('levelUp');
+                    this.spawnFloatingText(eater.x, eater.y, eaten.powerType.toUpperCase(), eaten.color);
+                }
 
                 // Haptic
                 if (navigator.vibrate) navigator.vibrate(20);
@@ -91,7 +113,13 @@ export default class GameManager {
             }
 
             // Camera Shake for large eats
-            if (eaten.type === 'hole' || (eaten.value && eaten.value > 10)) {
+            if (eaten.type === 'hole') {
+                this.camera.shake(10);
+                // Kill Logic
+                if (eater === this.player) {
+                    this.handlePlayerKill(eaten);
+                }
+            } else if (eaten.value && eaten.value > 10) {
                 this.camera.shake(5);
             }
         });
@@ -138,6 +166,11 @@ export default class GameManager {
         const currentProps = this.entities.filter(e => e.type === 'prop').length;
         if (currentProps < this.propCount) {
             this.spawnProp();
+        }
+
+        // Spawn Powerups (Rare)
+        if (Math.random() < 0.005) { // 0.5% chance per frame (~1 every 3s at 60fps)
+            this.spawnPowerUp();
         }
 
         // Check if player died
@@ -194,14 +227,49 @@ export default class GameManager {
         this.entities.push(prop);
     }
 
+    spawnPowerUp() {
+        const x = (Math.random() - 0.5) * this.worldSize;
+        const y = (Math.random() - 0.5) * this.worldSize;
+        const types = ['magnet', 'speed', 'shield'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        this.entities.push(new PowerUp(x, y, type));
+    }
+
+    handlePlayerKill(victim) {
+        this.kills++;
+        const now = Date.now();
+        if (now - this.lastKillTime < 5000) { // 5s window
+            this.killStreak++;
+        } else {
+            this.killStreak = 1;
+        }
+        this.lastKillTime = now;
+
+        // Slow Mo Impact
+        this.app.gameLoop.timeScale = 0.2;
+        this.slowMoTimer = 0.5; // Real seconds approx
+
+        // Announcer Text
+        let text = "KILL!";
+        let color = "#fff";
+        let size = 30;
+
+        if (this.killStreak === 2) { text = "DOUBLE KILL!"; color = "#ffae00"; size = 40; }
+        if (this.killStreak === 3) { text = "TRIPLE KILL!"; color = "#ff00ff"; size = 50; }
+        if (this.killStreak >= 4) { text = "RAMPAGE!"; color = "#ff0000"; size = 60; }
+
+        // Spawn big floating text at center of screen (relative to camera? No, world pos of kill)
+        this.spawnFloatingText(this.player.x, this.player.y - 50, text, color, size);
+    }
+
     spawnParticles(x, y, color) {
         for (let i = 0; i < 5; i++) {
             this.entities.push(new Particle(x, y, color));
         }
     }
 
-    spawnFloatingText(x, y, text, color) {
-        this.entities.push(new FloatingText(x, y, text, color));
+    spawnFloatingText(x, y, text, color, fontSize=20) {
+        this.entities.push(new FloatingText(x, y, text, color, fontSize));
     }
 
     updateHUD() {

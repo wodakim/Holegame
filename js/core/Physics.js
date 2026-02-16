@@ -25,6 +25,22 @@ export default class Physics {
         // Separate holes and props
         const holes = entities.filter(e => e.type === 'hole');
         const props = entities.filter(e => e.type === 'prop');
+        const powerups = entities.filter(e => e.type === 'powerup');
+
+        // Hole vs PowerUp
+        holes.forEach(hole => {
+             powerups.forEach(pu => {
+                 if (pu.markedForDeletion) return;
+                 const dx = hole.x - pu.x;
+                 const dy = hole.y - pu.y;
+                 const dist = Math.sqrt(dx*dx + dy*dy);
+                 if (dist < hole.radius + pu.radius) {
+                     pu.markedForDeletion = true;
+                     hole.applyPowerUp(pu.powerType);
+                     if (onEat) onEat(hole, pu); // Sound/Feedback
+                 }
+             });
+        });
 
         // Hole vs Prop
         holes.forEach(hole => {
@@ -39,7 +55,8 @@ export default class Physics {
                 const pullRadius = hole.radius + Math.max(prop.width || prop.radius, prop.height || prop.radius); // Rough bounding
 
                 // If within pull range
-                if (distSq < pullRadius * pullRadius * 1.5) { // 1.5x buffer
+                const magnetMultiplier = hole.activePowerUps && hole.activePowerUps['magnet'] ? 3.0 : 1.5;
+                if (distSq < pullRadius * pullRadius * magnetMultiplier) {
                     // Check if prop is smaller
                     // Calculate prop effective radius
                     const propR = prop.radius || (Math.max(prop.width, prop.height) / 2);
@@ -80,6 +97,9 @@ export default class Physics {
             // Hole vs Hole
             holes.forEach(otherHole => {
                 if (hole === otherHole) return;
+
+                // Shield check
+                if (otherHole.activePowerUps && otherHole.activePowerUps['shield']) return;
 
                 const dx = hole.x - otherHole.x;
                 const dy = hole.y - otherHole.y;

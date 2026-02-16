@@ -70,15 +70,18 @@ export default class SaveManager {
         }
     }
 
-    getCurrentSkinColor() {
-        // Map skin ID to color
-        const colors = {
-            'default': '#00f3ff', // Cyan
-            'neon_ring': '#ff00ff', // Magenta
-            'glitch': '#39ff14', // Lime
-            'dark_mode': '#ff3333' // Red
+    getCurrentSkinInfo() {
+        // This logic is better placed in ShopManager or a shared config, but for now hardcode/map here
+        // Ideally we fetch from ShopManager list.
+        const skins = {
+            'default': { color: '#00f3ff', shape: 'circle' },
+            'neon_ring': { color: '#ff00ff', shape: 'circle' },
+            'glitch': { color: '#39ff14', shape: 'square' },
+            'star_power': { color: '#ffd700', shape: 'star' },
+            'mech_gear': { color: '#ff4500', shape: 'gear' },
+            'dark_mode': { color: '#ff3333', shape: 'circle' }
         };
-        return colors[this.data.currentSkin] || '#00f3ff';
+        return skins[this.data.currentSkin] || skins['default'];
     }
 
     buyNoAds() {
