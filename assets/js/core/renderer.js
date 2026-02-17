@@ -1,14 +1,16 @@
 export default class Renderer {
-    constructor(canvas) {
+    constructor(canvas, assetManager) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+        this.assetManager = assetManager;
         this.width = canvas.width;
         this.height = canvas.height;
 
         // Configuration
         this.gridSize = 100;
-        this.gridColor = '#2a2a2a'; // Dark grey lines
-        this.floorColor = '#111'; // Almost black asphalt
+        this.roadWidth = 60; // Road width
+        this.sidewalkColor = '#3a3a3a'; // Dark Grey for blocks
+        this.roadColor = '#222'; // Darker for roads
     }
 
     resize(width, height) {
@@ -38,10 +40,10 @@ export default class Renderer {
         // Calculate Viewport Bounds for Culling
         const vpW = this.width / camera.zoom;
         const vpH = this.height / camera.zoom;
-        const viewLeft = camera.x - vpW / 2 - 100;
-        const viewRight = camera.x + vpW / 2 + 100;
-        const viewTop = camera.y - vpH / 2 - 100;
-        const viewBottom = camera.y + vpH / 2 + 100;
+        const viewLeft = camera.x - vpW / 2 - 200;
+        const viewRight = camera.x + vpW / 2 + 200;
+        const viewTop = camera.y - vpH / 2 - 200;
+        const viewBottom = camera.y + vpH / 2 + 200;
 
         // Helper to check visibility
         const isVisible = (e) => {
@@ -50,12 +52,11 @@ export default class Renderer {
                     e.y + r > viewTop && e.y - r < viewBottom);
         };
 
-        // 2. Draw Floor (The City Grid)
+        // 2. Draw Hybrid Floor (City Grid)
         this.drawFloor(camera);
 
         // 3. Draw Holes (Players/Bots) -> The "Void" Effect
         this.ctx.globalCompositeOperation = 'destination-out';
-
         entities.forEach(entity => {
             if (entity.type === 'hole') {
                 if (isVisible(entity)) this.drawHole(entity);
@@ -65,20 +66,17 @@ export default class Renderer {
         // 4. Draw Props & Particles (Sorted by Y for Depth)
         this.ctx.globalCompositeOperation = 'source-over';
 
-        // Filter visible entities first to avoid sorting unnecessary objects
         const visibleEntities = entities.filter(e => {
-            if (e.type === 'floating_text') return false; // Handled later
+            if (e.type === 'floating_text') return false;
             return isVisible(e);
         });
 
-        // Sort by Y position (Z-index simulation)
         visibleEntities.sort((a, b) => a.y - b.y);
 
         visibleEntities.forEach(entity => {
-            if (entity.type !== 'hole') { // Props, particles
-                entity.draw(this.ctx);
+            if (entity.type !== 'hole') {
+                this.drawEntitySprite(entity);
             } else {
-                // Draw the rim/glow of the hole on top
                 this.drawHoleRim(entity);
             }
         });
@@ -86,7 +84,6 @@ export default class Renderer {
         // Draw UI entities (Floating Text) last
         entities.forEach(entity => {
             if (entity.type === 'floating_text') {
-                // Floating text might move, but check origin
                 if (isVisible(entity)) entity.draw(this.ctx);
             }
         });
@@ -95,7 +92,6 @@ export default class Renderer {
     }
 
     drawFloor(camera) {
-        // Calculate visible bounds
         const viewportWidth = this.width / camera.zoom;
         const viewportHeight = this.height / camera.zoom;
         const startX = camera.x - viewportWidth / 2;
@@ -103,41 +99,49 @@ export default class Renderer {
         const endX = startX + viewportWidth;
         const endY = startY + viewportHeight;
 
-        // Snap to grid
         const gridStartX = Math.floor(startX / this.gridSize) * this.gridSize;
         const gridStartY = Math.floor(startY / this.gridSize) * this.gridSize;
 
-        this.ctx.fillStyle = this.floorColor;
-        // Optimization: Draw one big rectangle for the floor?
-        // Or just let the background be the floor color?
-        // If we use destination-out, the canvas must have content to erase.
-        // So we MUST fill the canvas with the floor color first.
-
-        // Since we are transformed, we can just draw a huge rect covering the view
+        // 1. Fill Background (Sidewalk Color)
+        this.ctx.fillStyle = this.sidewalkColor;
         this.ctx.fillRect(startX - 100, startY - 100, viewportWidth + 200, viewportHeight + 200);
 
-        // Draw Grid Lines
+        // 2. Draw Roads (Grid Lines)
+        this.ctx.lineWidth = this.roadWidth;
+        this.ctx.strokeStyle = this.roadColor;
         this.ctx.beginPath();
-        this.ctx.strokeStyle = this.gridColor;
-        this.ctx.lineWidth = 2;
 
         for (let x = gridStartX; x <= endX; x += this.gridSize) {
             this.ctx.moveTo(x, startY - 100);
             this.ctx.lineTo(x, endY + 100);
         }
-
         for (let y = gridStartY; y <= endY; y += this.gridSize) {
             this.ctx.moveTo(startX - 100, y);
             this.ctx.lineTo(endX + 100, y);
         }
-
         this.ctx.stroke();
+
+        // 3. Draw Road Markings (Dashed White Lines)
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.setLineDash([10, 10]);
+        this.ctx.beginPath();
+
+        for (let x = gridStartX; x <= endX; x += this.gridSize) {
+            this.ctx.moveTo(x, startY - 100);
+            this.ctx.lineTo(x, endY + 100);
+        }
+        for (let y = gridStartY; y <= endY; y += this.gridSize) {
+            this.ctx.moveTo(startX - 100, y);
+            this.ctx.lineTo(endX + 100, y);
+        }
+        this.ctx.stroke();
+        this.ctx.setLineDash([]); // Reset
     }
 
     updateParallax(camera) {
         const bg = document.getElementById('abyss-background');
         if (bg) {
-            // Move background slower than camera (e.g., 10% speed)
             const offsetX = -camera.x * 0.1;
             const offsetY = -camera.y * 0.1;
             bg.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
@@ -145,66 +149,60 @@ export default class Renderer {
     }
 
     drawHole(entity) {
-        // The actual "cut"
         this.ctx.beginPath();
+        // Use default shape drawing for the "cut", as textures don't work with destination-out easily
+        // unless we draw the mask. But circle/square is fine for the hole itself.
         this.drawShape(entity.x, entity.y, entity.radius, entity.shape);
         this.ctx.fill();
     }
 
     drawHoleRim(entity) {
-        // 1. Draw Depth Gradient (Inner Shadow)
-        // This gives the illusion of a deep pit
+        // If we have a skin asset, try to use it?
+        // But skins are usually just the rim.
+        // Let's stick to the procedural neon rim for now as it looks cool and "Void"-like
+        // OR if we have a skin asset, draw it on top.
+
+        const skinKey = entity.skinId || 'skin-default'; // Assuming entity has skinId
+        const skinImg = this.assetManager ? this.assetManager.getImage(skinKey) : null;
+
+        if (skinImg) {
+            this.ctx.save();
+            this.ctx.translate(entity.x, entity.y);
+            this.ctx.rotate(Date.now() * 0.002); // Spin
+            const size = entity.radius * 2.5; // Slightly larger than hole
+            this.ctx.drawImage(skinImg, -size/2, -size/2, size, size);
+            this.ctx.restore();
+
+            // Name
+            this.drawName(entity);
+            return;
+        }
+
+        // Fallback to Procedural Rim
         const depthGrad = this.ctx.createRadialGradient(entity.x, entity.y, entity.radius * 0.7, entity.x, entity.y, entity.radius);
         depthGrad.addColorStop(0, 'rgba(0,0,0,0)');
-        depthGrad.addColorStop(0.8, 'rgba(0,0,0,0.4)');
         depthGrad.addColorStop(1, 'rgba(0,0,0,0.8)');
-
         this.ctx.fillStyle = depthGrad;
         this.ctx.beginPath();
         this.ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // 2. Draw Trail
-        if (entity.trail) {
-            entity.trail.forEach(t => {
-                this.ctx.globalAlpha = t.a * 0.3;
-                this.ctx.beginPath();
-                this.drawShape(0, 0, t.r, entity.shape, t.x, t.y); // Pass coords
-                this.ctx.fillStyle = entity.color;
-                this.ctx.fill();
-            });
-            this.ctx.globalAlpha = 1.0;
-        }
-
-        // 3. Draw Neon Rings (Animated)
+        // Rings
         const time = Date.now() * 0.001;
-
         this.ctx.save();
         this.ctx.translate(entity.x, entity.y);
-
-        // Ring 1: Main Glow (Rotates slowly)
         this.ctx.rotate(time);
         this.ctx.beginPath();
-        this.drawShape(0, 0, entity.radius, entity.shape, 0, 0); // Local coords 0,0
-
+        this.drawShape(0, 0, entity.radius, entity.shape, 0, 0);
         this.ctx.strokeStyle = entity.color || '#00f3ff';
         this.ctx.lineWidth = 5;
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = entity.color || '#00f3ff';
         this.ctx.stroke();
-
-        // Ring 2: Inner Detail (Rotates fast opposite)
-        this.ctx.rotate(-time * 2.5);
-        this.ctx.beginPath();
-        this.drawShape(0, 0, entity.radius * 0.85, entity.shape, 0, 0);
-        this.ctx.lineWidth = 2;
-        this.ctx.globalAlpha = 0.7;
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.stroke();
-
         this.ctx.restore();
 
-        // 4. Draw Name
+        this.drawName(entity);
+    }
+
+    drawName(entity) {
         if (entity.name) {
             this.ctx.fillStyle = '#fff';
             this.ctx.font = 'bold 16px Montserrat';
@@ -214,90 +212,78 @@ export default class Renderer {
             this.ctx.fillText(entity.name, entity.x, entity.y - entity.radius - 20);
             this.ctx.shadowBlur = 0;
         }
+    }
 
-        // 5. Draw Police Siren
-        if (entity.isPolice) {
-            this.drawSiren(entity);
+    drawEntitySprite(entity) {
+        // Determine Asset Key
+        let key = null;
+        if (entity.type === 'prop') {
+            const pType = entity.propType;
+            if (pType === 'hydrant') key = 'prop-hydrant';
+            else if (pType === 'cone') key = 'prop-cone';
+            else if (pType === 'mailbox') key = 'prop-mailbox';
+            else if (pType === 'trash_bin') key = 'prop-trash';
+            else if (pType === 'kiosk' || pType === 'small_shop') key = 'prop-vending'; // Mapping
+            else if (pType === 'car') key = 'prop-car';
+            else if (pType === 'van' || pType === 'bus' || pType === 'truck') key = 'prop-van'; // Shared for now
+            else if (pType === 'tree') key = 'prop-tree';
+            else if (pType === 'building') key = 'prop-building';
+            // Fallback for others (pole, fence, etc) will use procedural or default
+        }
+
+        const img = this.assetManager ? this.assetManager.getImage(key) : null;
+
+        if (img) {
+            // Draw Sprite
+            this.ctx.save();
+
+            // Shake effect
+            const shakeX = entity.shake ? entity.shake.x : 0;
+            const shakeY = entity.shake ? entity.shake.y : 0;
+
+            this.ctx.translate(entity.x + shakeX, entity.y + shakeY);
+
+            // Rotation
+            if (entity.rotation) this.ctx.rotate(entity.rotation);
+            else if (entity.propType === 'car' || entity.propType === 'van') {
+                // If vehicles don't have rotation property set, maybe align?
+                // Usually Prop.js sets rotation.
+            }
+
+            // Scale
+            const scale = entity.scale || 1;
+            this.ctx.scale(scale, scale);
+
+            // Draw Image
+            // Calculate dimensions based on entity size or image aspect ratio
+            // Prop.js sets width/length.
+            let w = entity.width || entity.radius * 2;
+            let h = entity.length || entity.height || entity.radius * 2;
+
+            // Adjust for specific sprites that might be taller (buildings)
+            if (key === 'prop-building') {
+                // Building sprite is isometric, we draw it anchored at the bottom-center (roughly)
+                // Sprite viewbox is 100x100.
+                h = w * 1.5; // Make it tall
+                this.ctx.drawImage(img, -w/2, -h + w/4, w, h); // Offset y to anchor at bottom
+            } else {
+                this.ctx.drawImage(img, -w/2, -h/2, w, h);
+            }
+
+            this.ctx.restore();
+
+        } else {
+            // Fallback to original procedural drawing
+            if (entity.draw) entity.draw(this.ctx);
         }
     }
 
-    drawSiren(entity) {
-        const time = Date.now() * 0.005; // Faster rotation
-        this.ctx.save();
-        this.ctx.translate(entity.x, entity.y);
-        this.ctx.rotate(time);
-
-        // Blue Light Cone
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, 0);
-        this.ctx.arc(0, 0, entity.radius * 2, -0.5, 0.5);
-        this.ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
-        this.ctx.fill();
-
-        // Red Light Cone (Opposite)
-        this.ctx.rotate(Math.PI);
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, 0);
-        this.ctx.arc(0, 0, entity.radius * 2, -0.5, 0.5);
-        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-        this.ctx.fill();
-
-        this.ctx.restore();
-    }
-
-    // Updated to accept coordinates explicitly or default
     drawShape(x, y, r, type, cx = x, cy = y) {
-        // If cx, cy are passed, use them (for local transform)
-        // But the original method used x,y.
-        // My new call passes 0,0 as x,y and relies on translate.
-        // The Trail calls passed t.x, t.y.
-
-        // Let's standardise: x,y are center.
-
         if (type === 'square') {
             const side = r * Math.sqrt(2);
             this.ctx.rect(cx - side/2, cy - side/2, side, side);
-        } else if (type === 'star') {
-            this.drawStar(cx, cy, 5, r, r/2);
-        } else if (type === 'gear') {
-             this.drawGear(cx, cy, 8, r, r * 0.8);
         } else {
             this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
         }
-    }
-
-    drawStar(cx, cy, spikes, outerRadius, innerRadius) {
-        let rot = Math.PI / 2 * 3;
-        let x = cx;
-        let y = cy;
-        const step = Math.PI / spikes;
-
-        this.ctx.beginPath();
-        this.ctx.moveTo(cx, cy - outerRadius);
-        for (let i = 0; i < spikes; i++) {
-            x = cx + Math.cos(rot) * outerRadius;
-            y = cy + Math.sin(rot) * outerRadius;
-            this.ctx.lineTo(x, y);
-            rot += step;
-
-            x = cx + Math.cos(rot) * innerRadius;
-            y = cy + Math.sin(rot) * innerRadius;
-            this.ctx.lineTo(x, y);
-            rot += step;
-        }
-        this.ctx.lineTo(cx, cy - outerRadius);
-        this.ctx.closePath();
-    }
-
-    drawGear(cx, cy, teeth, outerRadius, innerRadius) {
-        const step = (Math.PI * 2) / (teeth * 2);
-
-        for (let i = 0; i < teeth * 2; i++) {
-            const r = (i % 2 === 0) ? outerRadius : innerRadius;
-            const angle = i * step - Math.PI / 2; // Start at top
-            if (i===0) this.ctx.moveTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
-            else this.ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
-        }
-        this.ctx.closePath();
     }
 }
