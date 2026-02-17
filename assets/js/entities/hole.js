@@ -56,7 +56,7 @@ export default class Hole extends Entity {
         this.score += effectiveAmount;
 
         const currentArea = Math.PI * this.radius * this.radius;
-        const addedArea = effectiveAmount * 12;
+        const addedArea = effectiveAmount * 3; // Hardcore slow growth
         const newArea = currentArea + addedArea;
 
         this.radius = Math.sqrt(newArea / Math.PI);
@@ -68,7 +68,7 @@ export default class Hole extends Entity {
         this.score = Math.max(0, this.score - amount * 5);
         const currentArea = Math.PI * this.radius * this.radius;
         const removeArea = amount * 15;
-        const newArea = Math.max(Math.PI * 25 * 25, currentArea - removeArea);
+        const newArea = Math.max(Math.PI * 15 * 15, currentArea - removeArea); // Min radius 15
         this.radius = Math.sqrt(newArea / Math.PI);
     }
 

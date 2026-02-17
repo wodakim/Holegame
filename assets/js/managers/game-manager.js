@@ -62,9 +62,9 @@ export default class GameManager {
         this.app.uiManager.switchScreen('hud');
         this.app.uiManager.showCountdown(this.startCountdown);
 
-        // Create Player (Small start)
+        // Create Player (Hardcore Small Start)
         const skinInfo = this.app.saveManager.getCurrentSkinInfo();
-        this.player = new Player(0, 0, 25, skinInfo.color, 'You', this.app.saveManager); // Radius 25
+        this.player = new Player(0, 0, 15, skinInfo.color, 'You', this.app.saveManager); // Radius 15
         this.player.shape = skinInfo.shape || 'circle';
         this.entities.push(this.player);
 
@@ -280,8 +280,8 @@ export default class GameManager {
         const colors = ['#ff00ff', '#39ff14', '#ffae00', '#00f3ff', '#ff3333'];
         const color = colors[Math.floor(Math.random() * colors.length)];
 
-        // Start same size as player: 25 + small random variance
-        const bot = new Bot(x, y, 25 + Math.random() * 5, color, name);
+        // Start same size as player: 15 + small random variance
+        const bot = new Bot(x, y, 15 + Math.random() * 3, color, name);
         this.entities.push(bot);
     }
 
@@ -357,7 +357,7 @@ export default class GameManager {
     revivePlayer() {
         this.app.adManager.showRewardedAd(() => {
              this.player.markedForDeletion = false;
-             this.player.radius = 25; // Reset to 25
+             this.player.radius = 15; // Reset to 15
              // Respawn safely
              this.player.x += 1000;
              this.entities.push(this.player);
