@@ -3,15 +3,15 @@ import Prop from '../entities/prop.js';
 export default class TrafficManager {
     constructor(gameManager) {
         this.gameManager = gameManager;
-        this.worldSize = gameManager.worldSize;
         this.cars = [];
         this.spawnTimer = 0;
-        this.roadSpacing = 200;
-        this.maxCars = 50;
+        this.maxCars = 30; // Reduced for performance on infinite map
     }
 
     update(dt) {
         this.spawnTimer += dt;
+        const player = this.gameManager.player;
+        if (!player) return;
 
         // Spawn Traffic
         if (this.spawnTimer > 1.0) { // Every 1s check
@@ -21,74 +21,77 @@ export default class TrafficManager {
             this.spawnTimer = 0;
         }
 
-        // Clean up out of bounds
+        // Clean up far away cars
         this.cars = this.cars.filter(c => !c.markedForDeletion);
-        // Also check if they drove off world
+
         this.cars.forEach(car => {
-            if (Math.abs(car.x) > this.worldSize/2 + 200 || Math.abs(car.y) > this.worldSize/2 + 200) {
+            const dx = car.x - player.x;
+            const dy = car.y - player.y;
+            if (dx*dx + dy*dy > 2500*2500) { // 2500px range
                 car.markedForDeletion = true;
             }
         });
     }
 
     spawnVehicle() {
-        const isHorizontal = Math.random() > 0.5;
-        // Align to grid (multiple of 200)
-        // Range -1000 to 1000 (if world is 2000, now 4000)
-        const lines = Math.floor(this.worldSize / this.roadSpacing);
-        const lineIndex = Math.floor(Math.random() * lines) - Math.floor(lines/2);
-        const lanePos = lineIndex * this.roadSpacing;
+        if (!this.gameManager.mapManager || !this.gameManager.player) return;
 
-        const direction = Math.random() > 0.5 ? 1 : -1;
+        const player = this.gameManager.player;
+        const pos = this.gameManager.mapManager.getRandomRoadPosition(player.x, player.y, 1500); // 1500 radius
 
-        // Determine Type
+        // Determine Type (Tier 4 or 5)
         const rand = Math.random();
         let type = 'car';
-        let width = 20;
-        let height = 30; // Length
-        let speed = 150 + Math.random() * 100;
-        let color = Math.random() > 0.5 ? '#ff0055' : '#0055ff';
+        let speed = 200 + Math.random() * 100;
 
-        if (rand < 0.2) { // 20% Truck
-            type = 'truck';
-            width = 25;
-            height = 60;
-            speed = 100 + Math.random() * 50;
-            color = '#ffffff'; // White trucks
-        } else if (rand < 0.4) { // 20% Bus
-            type = 'bus';
-            width = 25;
-            height = 50;
-            speed = 120 + Math.random() * 60;
-            color = '#ffae00'; // School bus yellow
-        } else {
-            // Cars can be varied colors
-            const carColors = ['#ff0055', '#0055ff', '#00ffaa', '#aa00ff'];
-            color = carColors[Math.floor(Math.random() * carColors.length)];
-        }
+        if (rand < 0.2) { type = 'truck'; speed = 150; }
+        else if (rand < 0.4) { type = 'bus'; speed = 180; }
 
-        let x, y, vx, vy, rotation;
+        let vx, vy, rotation;
 
-        if (isHorizontal) {
-            x = -direction * (this.worldSize/2 + 100);
-            y = lanePos;
-            vx = direction * speed;
-            vy = 0;
-            rotation = direction > 0 ? 0 : Math.PI;
-        } else {
-            x = lanePos;
-            y = -direction * (this.worldSize/2 + 100);
+        // Determine direction based on "Lane"
+        // pos.x, pos.y is the center of the road.
+        // Road width is 100.
+        // Lane 1: -25 offset. Lane 2: +25 offset.
+        // Let's say: Lane 1 goes Positive, Lane 2 goes Negative.
+
+        const laneOffset = (Math.random() > 0.5 ? 25 : -25);
+        const direction = (laneOffset > 0) ? 1 : -1;
+
+        if (pos.isVert) {
+            // Vertical Road
+            // x is fixed (center of road). y is random along it.
+            // We spawn "upstream" so it drives towards player?
+            // Or just random. Random is fine.
+            const x = pos.x + laneOffset;
+            const y = pos.y;
             vx = 0;
             vy = direction * speed;
             rotation = direction > 0 ? Math.PI/2 : -Math.PI/2;
+
+            const vehicle = new Prop(x, y, type);
+            vehicle.rotation = rotation;
+            vehicle.velocity = { x: vx, y: vy };
+            vehicle.isTraffic = true; // Flag for special handling
+
+            this.cars.push(vehicle);
+            this.gameManager.entities.push(vehicle);
+
+        } else {
+            // Horizontal Road
+            const x = pos.x;
+            const y = pos.y + laneOffset;
+            vx = direction * speed;
+            vy = 0;
+            rotation = direction > 0 ? 0 : Math.PI;
+
+            const vehicle = new Prop(x, y, type);
+            vehicle.rotation = rotation;
+            vehicle.velocity = { x: vx, y: vy };
+            vehicle.isTraffic = true;
+
+            this.cars.push(vehicle);
+            this.gameManager.entities.push(vehicle);
         }
-
-        const vehicle = new Prop(x, y, type, 5, width, height, color);
-        vehicle.velocity = { x: vx, y: vy };
-        vehicle.rotation = rotation;
-        vehicle.isTraffic = true;
-
-        this.cars.push(vehicle);
-        this.gameManager.entities.push(vehicle);
     }
 }

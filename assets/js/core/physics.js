@@ -1,6 +1,8 @@
 export default class Physics {
     constructor() {
-        this.worldBounds = { x: -2000, y: -2000, width: 4000, height: 4000 };
+        // Infinite world, no bounds check needed for player
+        // But we might want to kill entities that are extremely far if MapManager misses them?
+        // MapManager handles despawning.
     }
 
     update(dt, entities, onEat) {
@@ -13,98 +15,78 @@ export default class Physics {
                 entity.x += entity.velocity.x * dt;
                 entity.y += entity.velocity.y * dt;
             }
-
-            // Boundary checks for Holes
-            if (entity.type === 'hole') {
-                this.clampToWorld(entity);
-            }
         });
 
-        // 2. Collision & Suction
-        // Separate holes and props
+        // 2. Collision & Interaction
         const holes = entities.filter(e => e.type === 'hole');
-        const props = entities.filter(e => e.type === 'prop');
-        const powerups = entities.filter(e => e.type === 'powerup');
+        const props = entities.filter(e => e.type === 'prop' && !e.markedForDeletion);
+        const powerups = entities.filter(e => e.type === 'powerup' && !e.markedForDeletion);
 
-        // Hole vs PowerUp
+        // Holes vs PowerUps
         holes.forEach(hole => {
              powerups.forEach(pu => {
-                 if (pu.markedForDeletion) return;
                  const dx = hole.x - pu.x;
                  const dy = hole.y - pu.y;
                  const dist = Math.sqrt(dx*dx + dy*dy);
                  if (dist < hole.radius + pu.radius) {
                      pu.markedForDeletion = true;
                      hole.applyPowerUp(pu.powerType);
-                     if (onEat) onEat(hole, pu); // Sound/Feedback
+                     if (onEat) onEat(hole, pu);
                  }
              });
         });
 
-        // Hole vs Prop
+        // Holes vs Props
         holes.forEach(hole => {
             props.forEach(prop => {
-                // If prop is already eaten or shrinking too fast, skip?
-                if (prop.markedForDeletion) return;
-
-                // Check basic distance first (Circle-Circle approx)
+                // Optimization: Simple distance check
                 const dx = hole.x - prop.x;
                 const dy = hole.y - prop.y;
                 const distSq = dx*dx + dy*dy;
+                const dist = Math.sqrt(distSq);
 
-                // Calculate prop effective radius
-                const propR = prop.radius || (Math.max(prop.width, prop.height) / 2);
+                const propR = prop.radius || 10;
 
-                // Improve Suction Logic:
-                // Make the pull radius more generous so objects start sliding earlier.
-                // Was: hole.radius + prop.radius
-                // Now: hole.radius * 1.4 + prop.radius + Constant
-                const pullRadius = (hole.radius * 1.4) + propR + 30;
+                // Interaction Logic
+                // 1. Can we eat it? (Must be visibly larger)
+                if (hole.radius > propR * 1.1) {
 
-                // If within pull range
-                const magnetMultiplier = hole.activePowerUps && hole.activePowerUps['magnet'] ? 2.0 : 1.0;
+                    // Suction Range
+                    const pullRadius = hole.radius + propR + 100;
 
-                if (distSq < (pullRadius * magnetMultiplier) ** 2) {
-                    // Check if prop is smaller
-                    if (hole.radius > propR) {
-                        // SUCTION LOGIC
-                        // 1. Move prop towards hole center
-                        const dist = Math.sqrt(distSq);
-                        // Force increases as it gets closer.
-                        // At edge (dist = pullRadius): Force should be small but noticeable.
-                        // At center (dist = 0): Force huge.
-                        const force = (hole.radius / (dist + 10)) * 500 * dt;
+                    if (dist < pullRadius) {
+                        // Pull Force
+                        // Stronger when closer
+                        const force = (hole.radius / (dist + 10)) * 600 * dt;
                         const nx = dx / dist;
                         const ny = dy / dist;
 
-                        // Override traffic velocity if caught
-                        if (prop.isTraffic) {
-                            prop.velocity.x = 0;
-                            prop.velocity.y = 0;
-                            prop.isTraffic = false; // Stop driving
+                        // Stop traffic if caught
+                        if (prop.velocity) {
+                            prop.velocity.x *= 0.9;
+                            prop.velocity.y *= 0.9;
                         }
 
                         prop.x += nx * force;
                         prop.y += ny * force;
 
-                        // Apply Shake
-                        const shakeStrength = Math.min(10, force * 0.5); // Cap at 10px
+                        // Shake
                         if (prop.shake) {
-                            prop.shake.x = (Math.random() - 0.5) * shakeStrength;
-                            prop.shake.y = (Math.random() - 0.5) * shakeStrength;
+                            prop.shake.x = (Math.random() - 0.5) * 5;
+                            prop.shake.y = (Math.random() - 0.5) * 5;
                         }
 
-                        // 2. Shrink prop
-                        prop.scale = (prop.scale || 1) - 2 * dt;
-                        if (prop.scale < 0) prop.scale = 0;
+                        // Shrink effect
+                        if (dist < hole.radius) {
+                             prop.scale = Math.max(0, prop.scale - 3 * dt);
+                        }
 
-                        // 3. EAT LOGIC
-                        // If center is close enough
+                        // Eat Logic (Center check)
                         if (dist < hole.radius * 0.5) {
                             prop.markedForDeletion = true;
 
                             if (prop.propType === 'police') {
-                                hole.shrink(20); // Penalty
+                                hole.shrink(20);
                             } else {
                                 hole.grow(prop.value || 1);
                             }
@@ -112,58 +94,121 @@ export default class Physics {
                             if (onEat) onEat(hole, prop);
                         }
                     }
+
+                } else {
+                    // 2. Too big to eat. Collision?
+                    if (prop.isSolid) {
+                        this.resolveSolidCollision(hole, prop);
+                    }
+                    // If not solid (Cars, Humans), do nothing. Pass under.
                 }
             });
 
-            // Hole vs Hole
+            // Holes vs Holes
             holes.forEach(otherHole => {
                 if (hole === otherHole) return;
-                if (hole.markedForDeletion || otherHole.markedForDeletion) return;
-
-                // Shield check
-                if (otherHole.activePowerUps && otherHole.activePowerUps['shield']) return;
+                if (otherHole.markedForDeletion) return;
 
                 const dx = hole.x - otherHole.x;
                 const dy = hole.y - otherHole.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
-                // Eat Range: Distance < Radius
-                // Requirement: Must be bigger to eat
                 if (dist < hole.radius) {
-                    if (hole.radius > otherHole.radius * 1.05) { // 5% bigger buffer
+                    // Must be 10% bigger to eat another hole
+                    if (hole.radius > otherHole.radius * 1.1) {
 
-                         // Special Logic: Police Cures (Shrinks) Player
+                         // Police Logic
                          if (otherHole.isPolice) {
-                             hole.shrink(20); // Penalty
+                             hole.shrink(20);
                              otherHole.markedForDeletion = true;
-                             if (onEat) onEat(hole, otherHole); // Trigger "CURED!"
+                             if (onEat) onEat(hole, otherHole);
                              return;
                          }
 
                          otherHole.markedForDeletion = true;
-                         // Reward: 1/3 of victim's points
                          const reward = Math.floor(otherHole.score / 3);
-                         hole.grow(reward > 0 ? reward : 10); // Minimum 10 points
+                         hole.grow(reward > 0 ? reward : 10);
                          if (onEat) onEat(hole, otherHole);
+                    } else {
+                        // Elastic collision (Push apart)
+                        // Only if sizes are similar
+                        if (hole.radius < otherHole.radius * 1.1) {
+                            const overlap = (hole.radius + otherHole.radius) - dist;
+                            if (overlap > 0) {
+                                const nx = dx / dist;
+                                const ny = dy / dist;
+                                // Move hole out half overlap
+                                hole.x += nx * overlap * 0.1;
+                                hole.y += ny * overlap * 0.1;
+                            }
+                        }
                     }
                 }
             });
         });
     }
 
-    clampToWorld(entity) {
-        if (entity.x - entity.radius < this.worldBounds.x) entity.x = this.worldBounds.x + entity.radius;
-        if (entity.x + entity.radius > this.worldBounds.x + this.worldBounds.width) entity.x = this.worldBounds.x + this.worldBounds.width - entity.radius;
-        if (entity.y - entity.radius < this.worldBounds.y) entity.y = this.worldBounds.y + entity.radius;
-        if (entity.y + entity.radius > this.worldBounds.y + this.worldBounds.height) entity.y = this.worldBounds.y + this.worldBounds.height - entity.radius;
+    resolveSolidCollision(hole, prop) {
+        // Prop is solid (Building, Pole).
+        // Treat as Rectangle or Circle?
+        // Buildings are usually Rects. Poles are Circles.
+
+        // Simplification: Treat Buildings as Rects, everything else as Circles.
+        if (prop.propType === 'building' || prop.propType === 'shelter') {
+             this.resolveRectCollision(hole, prop);
+        } else {
+             this.resolveCircleCollision(hole, prop);
+        }
     }
 
-    // Helper: Circle-Rect collision
-    static checkCircleRect(circle, rect) {
-        const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
-        const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
-        const dx = circle.x - closestX;
-        const dy = circle.y - closestY;
-        return (dx * dx + dy * dy) < (circle.radius * circle.radius);
+    resolveCircleCollision(hole, prop) {
+        const dx = hole.x - prop.x;
+        const dy = hole.y - prop.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const minDist = hole.radius + prop.radius; // Approximate physical radius
+
+        if (dist < minDist) {
+            const overlap = minDist - dist;
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            // Move hole out
+            hole.x += nx * overlap;
+            hole.y += ny * overlap;
+        }
+    }
+
+    resolveRectCollision(hole, prop) {
+        // Rect dimensions
+        const hw = prop.width / 2;
+        const hh = prop.length / 2; // In Prop, length is height (y-axis size) usually
+
+        // Clamp point (hole center) to rect
+        const closestX = Math.max(prop.x - hw, Math.min(hole.x, prop.x + hw));
+        const closestY = Math.max(prop.y - hh, Math.min(hole.y, prop.y + hh));
+
+        const dx = hole.x - closestX;
+        const dy = hole.y - closestY;
+        const distSq = dx*dx + dy*dy;
+
+        // If distance from closest point is less than radius, we are colliding
+        if (distSq < hole.radius * hole.radius) {
+            const dist = Math.sqrt(distSq);
+
+            // Prevent division by zero
+            if (dist === 0) {
+                // Center is exactly inside, push out arbitrarily
+                hole.x += hole.radius;
+                return;
+            }
+
+            const overlap = hole.radius - dist;
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            // Move hole out
+            hole.x += nx * overlap;
+            hole.y += ny * overlap;
+        }
     }
 }

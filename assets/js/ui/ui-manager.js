@@ -8,7 +8,8 @@ export default class UIManager {
             hud: document.getElementById('screen-hud'),
             shop: document.getElementById('screen-shop'),
             gameOver: document.getElementById('screen-game-over'),
-            pause: document.getElementById('screen-pause')
+            pause: document.getElementById('screen-pause'),
+            matchmaking: document.getElementById('screen-matchmaking')
         };
 
         this.minimap = new Minimap(document.getElementById('minimap-canvas'), app);
@@ -16,8 +17,16 @@ export default class UIManager {
     }
 
     bindEvents() {
-        // Main Menu
-        document.getElementById('btn-play').addEventListener('click', () => this.app.gameManager.startGame());
+        // Main Menu - Time Selection
+        const timeButtons = document.querySelectorAll('.btn-time');
+        timeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const time = parseInt(e.target.dataset.time);
+                this.startMatchmaking(time);
+            });
+        });
+
+        // document.getElementById('btn-play').addEventListener('click', () => this.app.gameManager.startGame()); // Removed
         document.getElementById('btn-shop').addEventListener('click', () => this.app.shopManager.openShop());
         document.getElementById('btn-no-ads').addEventListener('click', () => this.app.shopManager.buyNoAds());
 
@@ -26,7 +35,10 @@ export default class UIManager {
 
         // Game Over
         document.getElementById('btn-revive').addEventListener('click', () => this.app.gameManager.revivePlayer());
-        document.getElementById('btn-replay').addEventListener('click', () => this.app.gameManager.startGame());
+        document.getElementById('btn-replay').addEventListener('click', () => {
+             // Replay with last duration or default 2 mins
+             this.app.gameManager.startGame(this.lastDuration || 120);
+        });
 
         // Pause
         document.getElementById('btn-pause').addEventListener('click', () => this.app.gameManager.pauseGame());
@@ -34,11 +46,32 @@ export default class UIManager {
         document.getElementById('btn-quit').addEventListener('click', () => this.app.gameManager.quitGame());
     }
 
+    startMatchmaking(duration) {
+        this.lastDuration = duration;
+        this.switchScreen('matchmaking');
+
+        const waitSpan = document.getElementById('wait-time');
+        let timeLeft = 3; // 3 seconds wait
+        if (waitSpan) waitSpan.textContent = timeLeft;
+
+        const interval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0 && waitSpan) waitSpan.textContent = timeLeft;
+        }, 1000);
+
+        setTimeout(() => {
+            clearInterval(interval);
+            this.app.gameManager.startGame(duration);
+        }, 3000);
+    }
+
     switchScreen(screenName) {
         // Hide all
         Object.values(this.screens).forEach(s => {
-            s.classList.add('hidden');
-            s.classList.remove('active');
+            if (s) {
+                s.classList.add('hidden');
+                s.classList.remove('active');
+            }
         });
 
         // Show target
@@ -57,16 +90,12 @@ export default class UIManager {
 
         // Score
         document.getElementById('hud-score').textContent = Math.floor(score);
-        document.getElementById('hud-kills').textContent = kills; // Use passed kills
+        document.getElementById('hud-kills').textContent = kills;
 
         // Leaderboard
         const leaderboard = document.getElementById('leaderboard');
         leaderboard.innerHTML = '';
 
-        // Sort players by score/radius
-        // We need a copy to sort without affecting game logic array order (though Physics logic iterates, render order matters?)
-        // Physics update order doesn't matter much. Render order: bigger on top? usually smaller on top?
-        // Let's just sort a copy.
         const sorted = [...players].sort((a, b) => b.radius - a.radius).slice(0, 5);
 
         sorted.forEach((h, index) => {
@@ -85,7 +114,6 @@ export default class UIManager {
         const menuCoins = document.getElementById('menu-coin-count');
         if (menuCoins) menuCoins.textContent = coins;
 
-        // Update Missions if GameManager exists (might be called before init)
         if (this.app.gameManager && this.app.gameManager.missionManager) {
             this.updateMissions(this.app.gameManager.missionManager.getMissionsText());
         }
@@ -93,7 +121,6 @@ export default class UIManager {
         const shopCoins = document.getElementById('shop-coin-count');
         if (shopCoins) shopCoins.textContent = coins;
 
-        // Check for Shop Badge
         const badge = document.getElementById('shop-badge');
         if (badge) {
             if (coins >= 500) {
@@ -120,11 +147,10 @@ export default class UIManager {
         document.getElementById('final-rank').textContent = `RANK #${rank}`;
         document.getElementById('earned-coins').textContent = coinsEarned;
 
-        // Animate progress bar?
         const bar = document.getElementById('progress-bar-fill');
         bar.style.width = '0%';
         setTimeout(() => {
-            bar.style.width = '100%'; // Just fill it for visual feedback
+            bar.style.width = '100%';
         }, 100);
     }
 
@@ -151,8 +177,6 @@ export default class UIManager {
         notif.style.color = color || '#fff';
         notif.style.opacity = '1';
 
-        // Clear previous timeout if any? A bit complex to track without variable.
-        // Simple overlap is fine.
         setTimeout(() => {
             notif.style.opacity = '0';
         }, 3000);
