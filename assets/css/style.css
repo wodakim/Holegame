@@ -641,3 +641,9 @@ button {
         min-height: 200px;
     }
 }
+
+/* Critical Fix: Ensure hidden popups don't block clicks */
+.popup.hidden {
+    pointer-events: none;
+    z-index: -1;
+}
