@@ -48,8 +48,8 @@ export default class Physics {
                 const propR = prop.radius || 10;
 
                 // Interaction Logic
-                // 1. Can we eat it? (Must be visibly larger)
-                if (hole.radius > propR * 1.1) {
+                // 1. Can we eat it? (Must be strictly larger - Standard .io)
+                if (hole.radius > propR) {
 
                     // Suction Range
                     const pullRadius = hole.radius + propR + 100;
@@ -114,8 +114,8 @@ export default class Physics {
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
                 if (dist < hole.radius) {
-                    // Must be 10% bigger to eat another hole
-                    if (hole.radius > otherHole.radius * 1.1) {
+                    // Must be 5% bigger to eat another hole (slightly harder than props)
+                    if (hole.radius > otherHole.radius * 1.05) {
 
                          // Police Logic
                          if (otherHole.isPolice) {
@@ -132,7 +132,7 @@ export default class Physics {
                     } else {
                         // Elastic collision (Push apart)
                         // Only if sizes are similar
-                        if (hole.radius < otherHole.radius * 1.1) {
+                        if (hole.radius < otherHole.radius * 1.05) {
                             const overlap = (hole.radius + otherHole.radius) - dist;
                             if (overlap > 0) {
                                 const nx = dx / dist;

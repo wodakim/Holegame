@@ -169,9 +169,15 @@ h1 {
     font-size: 3.5rem;
     font-weight: 900;
     text-transform: uppercase;
-    color: #fff; /* White title pops on colored bg */
-    -webkit-text-stroke: 2px var(--color-dark);
-    text-shadow: 4px 4px 0 var(--color-dark); /* Hard shadow */
+    color: #fff;
+    /* Strong Pathfinder Outline */
+    -webkit-text-stroke: 3px var(--color-dark);
+    text-shadow:
+        4px 4px 0 var(--color-dark),
+        -1px -1px 0 var(--color-dark),
+        1px -1px 0 var(--color-dark),
+        -1px 1px 0 var(--color-dark),
+        1px 1px 0 var(--color-dark);
     margin-bottom: 2rem;
     letter-spacing: 2px;
     text-align: center;
@@ -180,15 +186,20 @@ h1 {
 h2 {
     font-size: 2.2rem;
     color: #fff;
-    -webkit-text-stroke: 1.5px var(--color-dark);
-    text-shadow: 3px 3px 0 var(--color-dark);
+    -webkit-text-stroke: 2px var(--color-dark);
+    text-shadow:
+        3px 3px 0 var(--color-dark),
+        -1px -1px 0 var(--color-dark),
+        1px -1px 0 var(--color-dark),
+        -1px 1px 0 var(--color-dark),
+        1px 1px 0 var(--color-dark);
     margin-bottom: 1rem;
     font-weight: 900;
 }
 
 button {
     font-family: var(--font-main);
-    font-weight: 800;
+    font-weight: 900; /* Bolder */
     border: var(--border-width) solid var(--color-dark);
     outline: none;
     cursor: pointer;
@@ -197,9 +208,12 @@ button {
     border-radius: var(--border-radius);
     padding: 15px 30px;
     margin: 10px;
-    font-size: 1.2rem;
+    font-size: 1.3rem; /* Larger Text */
     position: relative;
     overflow: hidden;
+    /* Pathfinder Text Effect */
+    -webkit-text-stroke: 1.5px var(--color-dark);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
     /* 3D "Juicy" Effect */
     box-shadow: 0 6px 0 var(--color-dark);
     transform: translateY(0);
