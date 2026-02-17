@@ -1,20 +1,23 @@
 #mission-board {
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
+    background: #fff; /* White card */
+    border: 3px solid var(--color-dark); /* Thick border */
+    border-radius: 16px;
     padding: 15px;
     margin: 10px 0;
-    width: 80%;
+    width: 85%;
     max-width: 400px;
     text-align: left;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.1); /* 3D effect */
 }
 
 #mission-board h3 {
-    color: var(--color-tertiary); /* Lime */
-    font-size: 1rem;
+    color: var(--color-dark);
+    font-size: 1.1rem;
+    font-weight: 800;
     margin-bottom: 10px;
     text-align: center;
     text-shadow: none;
+    text-transform: uppercase;
 }
 
 #mission-list {
@@ -23,8 +26,14 @@
 }
 
 #mission-list li {
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 2px;
+    font-size: 0.95rem;
+    color: var(--color-dark);
+    font-weight: 600;
+    margin-bottom: 8px;
+    border-bottom: 2px dashed #ddd; /* Dotted line separator */
+    padding-bottom: 4px;
+}
+
+#mission-list li:last-child {
+    border-bottom: none;
 }
