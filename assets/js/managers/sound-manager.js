@@ -31,11 +31,13 @@ export default class SoundManager {
 
     play(type) {
         if (!this.initialized || this.muted) return;
-        if (this.ctx.state === 'suspended') this.ctx.resume();
 
-        const t = this.ctx.currentTime;
+        try {
+            if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
 
-        switch (type) {
+            const t = this.ctx.currentTime;
+
+            switch (type) {
             case 'uiClick':
                 this.playTone(t, 800, 'sine', 0.1, 0.1);
                 this.playTone(t, 1200, 'triangle', 0.05, 0.05); // "Click" transient
@@ -85,6 +87,9 @@ export default class SoundManager {
                 this.playSweep(t, 600, 1200, 0.6, 'sawtooth');
                 this.playSweep(t+0.6, 1200, 600, 0.6, 'sawtooth');
                 break;
+            }
+        } catch (e) {
+            console.warn("Audio Error:", e);
         }
     }
 
@@ -160,10 +165,11 @@ export default class SoundManager {
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
 
+        let lastOut = 0; // Initialize outside loop
         for (let i = 0; i < bufferSize; i++) {
             const white = Math.random() * 2 - 1;
             data[i] = (lastOut + (0.02 * white)) / 1.02; // Simple Brown Noise filter
-            var lastOut = data[i];
+            lastOut = data[i];
             data[i] *= 3.5;
         }
 
