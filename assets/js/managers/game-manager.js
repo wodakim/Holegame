@@ -1,6 +1,6 @@
 import Player from '../entities/player.js';
 import Bot from '../entities/bot.js';
-import PoliceBot from '../entities/Policebot.js';
+import PoliceBot from '../entities/police-bot.js';
 import Prop from '../entities/prop.js';
 import PowerUp from '../entities/power-up.js';
 import Particle from '../entities/particle.js';
