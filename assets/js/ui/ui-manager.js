@@ -1,4 +1,4 @@
-import Minimap from './Minimap.js';
+import Minimap from './minimap.js';
 
 export default class UIManager {
     constructor(app) {

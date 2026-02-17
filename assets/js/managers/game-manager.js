@@ -1,14 +1,14 @@
-import Player from '../entities/Player.js';
-import Bot from '../entities/Bot.js';
-import PoliceBot from '../entities/PoliceBot.js';
-import Prop from '../entities/Prop.js';
-import PowerUp from '../entities/PowerUp.js';
-import Particle from '../entities/Particle.js';
-import FloatingText from '../entities/FloatingText.js';
-import Physics from '../core/Physics.js';
-import Camera from '../core/Camera.js';
-import TrafficManager from './TrafficManager.js';
-import MissionManager from './MissionManager.js';
+import Player from '../entities/player.js';
+import Bot from '../entities/bot.js';
+import PoliceBot from '../entities/police-bot.js';
+import Prop from '../entities/prop.js';
+import PowerUp from '../entities/power-up.js';
+import Particle from '../entities/particle.js';
+import FloatingText from '../entities/floating-text.js';
+import Physics from '../core/physics.js';
+import Camera from '../core/camera.js';
+import TrafficManager from './traffic-manager.js';
+import MissionManager from './mission-manager.js';
 
 export default class GameManager {
     constructor(app) {

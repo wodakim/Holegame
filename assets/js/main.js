@@ -1,12 +1,12 @@
-import GameManager from './managers/GameManager.js';
-import SaveManager from './managers/SaveManager.js';
-import AdManager from './managers/AdManager.js';
-import ShopManager from './managers/ShopManager.js';
-import SoundManager from './managers/SoundManager.js';
-import UIManager from './ui/UIManager.js';
-import Renderer from './core/Renderer.js';
-import InputHandler from './core/InputHandler.js';
-import GameLoop from './core/GameLoop.js';
+import GameManager from './managers/game-manager.js';
+import SaveManager from './managers/save-manager.js';
+import AdManager from './managers/ad-manager.js';
+import ShopManager from './managers/shop-manager.js';
+import SoundManager from './managers/sound-manager.js';
+import UIManager from './ui/ui-manager.js';
+import Renderer from './core/renderer.js';
+import InputHandler from './core/input-handler.js';
+import GameLoop from './core/game-loop.js';
 
 class App {
     constructor() {

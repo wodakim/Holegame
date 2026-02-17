@@ -1,4 +1,4 @@
-import Entity from './Entity.js';
+import Entity from './entity.js';
 
 export default class FloatingText extends Entity {
     constructor(x, y, text, color, fontSize = 20) {

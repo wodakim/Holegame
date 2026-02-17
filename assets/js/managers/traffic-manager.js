@@ -1,4 +1,4 @@
-import Prop from '../entities/Prop.js';
+import Prop from '../entities/prop.js';
 
 export default class TrafficManager {
     constructor(gameManager) {

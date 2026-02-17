@@ -1,4 +1,4 @@
-import Entity from './Entity.js';
+import Entity from './entity.js';
 
 export default class PowerUp extends Entity {
     constructor(x, y, type) {

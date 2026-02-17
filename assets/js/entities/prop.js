@@ -1,4 +1,4 @@
-import Entity from './Entity.js';
+import Entity from './entity.js';
 
 export default class Prop extends Entity {
     constructor(x, y, type, value, width, height, color) {
