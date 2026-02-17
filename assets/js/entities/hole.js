@@ -69,7 +69,7 @@ export default class Hole extends Entity {
         // It should take many small items to grow visibly.
 
         const currentArea = Math.PI * this.radius * this.radius;
-        const addedArea = effectiveAmount * 15; // Drastically reduced from 100
+        const addedArea = effectiveAmount * 12; // Further reduced for scalable challenge
         const newArea = currentArea + addedArea;
 
         this.radius = Math.sqrt(newArea / Math.PI);
