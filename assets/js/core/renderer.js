@@ -62,16 +62,19 @@ export default class Renderer {
             }
         });
 
-        // 4. Draw Props & Particles (Normal rendering)
+        // 4. Draw Props & Particles (Sorted by Y for Depth)
         this.ctx.globalCompositeOperation = 'source-over';
 
-        entities.forEach(entity => {
-            // Optimization: Skip off-screen entities
-            // Holes are critical so we check them above, but props/particles must be culled
-            if (!isVisible(entity)) return;
+        // Filter visible entities first to avoid sorting unnecessary objects
+        const visibleEntities = entities.filter(e => {
+            if (e.type === 'floating_text') return false; // Handled later
+            return isVisible(e);
+        });
 
-            if (entity.type === 'floating_text') return; // Draw last
+        // Sort by Y position (Z-index simulation)
+        visibleEntities.sort((a, b) => a.y - b.y);
 
+        visibleEntities.forEach(entity => {
             if (entity.type !== 'hole') { // Props, particles
                 entity.draw(this.ctx);
             } else {

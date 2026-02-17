@@ -1,7 +1,7 @@
 export default class UpgradeManager {
     constructor(gameManager) {
         this.gameManager = gameManager;
-        this.baseThreshold = 1000;
+        this.baseThreshold = 300; // Reduced from 1000 for Hardcore pacing
         this.nextThreshold = this.baseThreshold;
         this.level = 1;
 
@@ -22,7 +22,8 @@ export default class UpgradeManager {
     checkLevelUp(playerScore) {
         if (playerScore >= this.nextThreshold) {
             this.triggerLevelUp();
-            const increment = this.level * 1500;
+            // Scaled for Hardcore scoring (approx 1/3 of previous)
+            const increment = this.level * 500;
             this.nextThreshold += increment;
             this.level++;
         }

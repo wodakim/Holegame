@@ -54,6 +54,7 @@ export default class GameManager {
         this.score = 0;
         this.kills = 0;
         this.gameTime = duration;
+        this.totalDuration = duration; // Store for rewards
         this.entities = [];
         this.upgradeManager = new UpgradeManager(this); // Reset upgrades
 
@@ -344,7 +345,23 @@ export default class GameManager {
 
         if (this.player.score > 5000) this.missionManager.onEvent('reach_mass', 5000);
         const missionReward = this.missionManager.checkCompletion();
-        const coinsEarned = Math.floor(this.player.score / 10) + missionReward;
+
+        // Fixed Match Reward based on Duration
+        let matchReward = 0;
+        // Check initial duration (gameTime is current remaining, need original)
+        // We can infer or store it. Let's assume standard durations:
+        // Short (2m/120s) -> 50
+        // Medium (5m/300s) -> 200
+        // Long (10m/600s) -> 1000
+        // We need to store 'maxTime' or 'totalDuration' in startGame.
+        // For now, let's use a heuristic or add a property.
+
+        // Quick fix: Add this.totalDuration to startGame
+        if (this.totalDuration >= 600) matchReward = 1000;
+        else if (this.totalDuration >= 300) matchReward = 200;
+        else matchReward = 50;
+
+        const coinsEarned = matchReward + missionReward;
         this.app.saveManager.addCoins(coinsEarned);
 
         if (this.player.score > this.app.saveManager.getHighScore()) {
