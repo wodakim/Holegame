@@ -65,8 +65,7 @@ export default class GameManager {
 
         // Create Player (Hardcore Small Start)
         const skinInfo = this.app.saveManager.getCurrentSkinInfo();
-        // Updated: Radius 25 (Buffed from 15) to guarantee domination over Humans/Trash (Size 14/10)
-        this.player = new Player(0, 0, 25, skinInfo.color, 'You', this.app.saveManager);
+        this.player = new Player(0, 0, 15, skinInfo.color, 'You', this.app.saveManager); // Radius 15
         this.player.shape = skinInfo.shape || 'circle';
         this.entities.push(this.player);
 
@@ -141,18 +140,16 @@ export default class GameManager {
                     if (navigator.vibrate) navigator.vibrate(200);
                 }
                 else if (eaten.type === 'prop') {
+                    this.app.soundManager.play('eatSmall');
                     const value = eaten.value || 1;
-                    if (value > 20) {
-                        this.app.soundManager.play('eatMedium');
-                    } else {
-                        this.app.soundManager.play('eatSmall');
-                    }
-
-                    this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#2ECC71');
+                    this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
                     if (eaten.propType === 'car') this.missionManager.onEvent('eat_car');
 
                     // Trigger level up check on score gain
-                    this.score += 0;
+                    this.score += 0; // Already added in physics via grow(), but we track it here for UI?
+                    // Physics calls hole.grow(). Player.score updates inside grow().
+                    // We check this.player.score in updateHUD.
+                    // Check level up here:
                     this.upgradeManager.checkLevelUp(this.player.score);
                 }
                 else if (eaten.type === 'hole') {
@@ -163,12 +160,12 @@ export default class GameManager {
                 }
                 else if (eaten.type === 'powerup') {
                     this.app.soundManager.play('levelUp');
-                    this.spawnFloatingText(eater.x, eater.y, "SPEED!", '#F1C40F');
+                    this.spawnFloatingText(eater.x, eater.y, "SPEED!", '#00ffff');
                 }
             }
 
             // Particles
-            const pCount = eaten.type === 'hole' ? 15 : (eaten.value > 10 ? 8 : 4);
+            const pCount = eaten.type === 'hole' ? 10 : (eaten.value > 10 ? 5 : 2);
             this.spawnParticles(eaten.x, eaten.y, eaten.color, pCount);
 
             // Camera Shake

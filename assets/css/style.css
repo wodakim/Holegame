@@ -21,25 +21,15 @@
 }
 
 :root {
-    /* Vibrant / Dofus-like Palette */
-    --color-primary: #F1C40F;   /* Sunflower Yellow (Buttons, Highlights) */
-    --color-secondary: #E67E22; /* Carrot Orange (Secondary actions) */
-    --color-tertiary: #2ECC71;  /* Emerald Green (Success, Growth) */
-    --color-accent: #9B59B6;    /* Amethyst Purple (Magic/Tech) */
-    --color-danger: #E74C3C;    /* Alizarin Red (Danger) */
-
-    --color-dark: #2C3E50;      /* Midnight Blue (Outlines, Text) */
-    --color-light: #ECF0F1;     /* Clouds (Backgrounds) */
-
-    --color-glass: rgba(255, 255, 255, 0.85); /* Milky Glass */
-    --color-text: #2C3E50;      /* Dark Text for readability */
-
+    --color-primary: #00f3ff; /* Cyan */
+    --color-secondary: #ff00ff; /* Magenta */
+    --color-tertiary: #39ff14; /* Lime Green */
+    --color-accent: #ffae00; /* Bright Orange */
+    --color-dark: #0a0a0a;
+    --color-glass: rgba(20, 20, 30, 0.6);
+    --color-text: #ffffff;
     --font-main: 'Montserrat', sans-serif;
     --ad-height: 60px;
-
-    --border-width: 3px;
-    --border-radius: 16px;
-    --box-shadow: 0 4px 0 var(--color-dark); /* 3D effect shadow */
 }
 
 * {
@@ -47,35 +37,34 @@
     margin: 0;
     padding: 0;
     user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
+    -webkit-user-select: none; /* iOS Safari */
+    touch-action: none; /* Prevent browser gestures */
 }
 
 body {
     font-family: var(--font-main);
-    background-color: var(--color-light); /* Light background */
+    background-color: var(--color-dark);
     color: var(--color-text);
-    overflow: hidden;
+    overflow: hidden; /* Prevent scroll */
     width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* Layer 1: Abyss Background (Now Sky/Void) */
+/* Layer 1: Abyss Background */
 #abyss-background {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    /* Subtle pattern or gradient */
-    background: radial-gradient(circle at center, #3498DB 0%, #2980B9 100%);
-    z-index: -2;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+    z-index: -2; /* Behind everything */
     overflow: hidden;
 }
 
-/* Clouds / Pattern Overlay */
+/* Add some stars/particles to abyss via CSS if possible, or just a simple gradient for now */
 #abyss-background::after {
     content: '';
     position: absolute;
@@ -84,17 +73,22 @@ body {
     width: 200%;
     height: 200%;
     background-image:
-        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 10%),
-        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 10%);
-    background-size: 400px 400px;
-    opacity: 0.5;
-    animation: drift 60s linear infinite;
+        radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 130px 80px, #ffffff, rgba(0,0,0,0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.15; /* Reduced opacity */
+    animation: drift 120s linear infinite; /* Slower animation */
 }
 
 @keyframes drift {
     from { transform: translate(0, 0); }
-    to { transform: translate(-10%, -10%); }
+    to { transform: translate(-10%, -10%); } /* Reduced drift distance */
 }
+
 
 /* Layer 2: Game Canvas */
 #game-canvas {
@@ -102,7 +96,7 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(100% - var(--ad-height));
+    height: calc(100% - var(--ad-height)); /* Subtract ad height */
     z-index: 0;
     display: block;
 }
@@ -115,7 +109,7 @@ body {
     width: 100%;
     height: calc(100% - var(--ad-height));
     z-index: 10;
-    pointer-events: none;
+    pointer-events: none; /* Let touches pass through to canvas */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -128,15 +122,14 @@ body {
     left: 0;
     width: 100%;
     height: var(--ad-height);
-    background-color: #fff;
-    color: var(--color-dark);
+    background-color: #222;
+    color: #666;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 12px;
     z-index: 100;
-    border-top: var(--border-width) solid var(--color-dark);
-    font-weight: bold;
+    border-top: 1px solid #444;
 }
 
 /* Screens */
@@ -148,13 +141,13 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    pointer-events: auto;
-    transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    pointer-events: auto; /* Enable clicks on UI elements */
+    transition: opacity 0.3s ease;
 }
 
 .hidden {
     opacity: 0;
-    pointer-events: none !important;
+    pointer-events: none;
     z-index: -1;
 }
 
@@ -166,72 +159,60 @@ body {
 
 /* Typography & Buttons */
 h1 {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 900;
     text-transform: uppercase;
-    color: #fff;
-    /* Strong Pathfinder Outline */
-    -webkit-text-stroke: 3px var(--color-dark);
-    text-shadow:
-        4px 4px 0 var(--color-dark),
-        -1px -1px 0 var(--color-dark),
-        1px -1px 0 var(--color-dark),
-        -1px 1px 0 var(--color-dark),
-        1px 1px 0 var(--color-dark);
+    color: var(--color-primary);
+    text-shadow: 0 0 20px var(--color-primary);
     margin-bottom: 2rem;
     letter-spacing: 2px;
     text-align: center;
 }
 
 h2 {
-    font-size: 2.2rem;
-    color: #fff;
-    -webkit-text-stroke: 2px var(--color-dark);
-    text-shadow:
-        3px 3px 0 var(--color-dark),
-        -1px -1px 0 var(--color-dark),
-        1px -1px 0 var(--color-dark),
-        -1px 1px 0 var(--color-dark),
-        1px 1px 0 var(--color-dark);
+    font-size: 2rem;
+    color: var(--color-secondary);
+    text-shadow: 0 0 10px var(--color-secondary);
     margin-bottom: 1rem;
-    font-weight: 900;
 }
 
 button {
     font-family: var(--font-main);
-    font-weight: 900; /* Bolder */
-    border: var(--border-width) solid var(--color-dark);
+    font-weight: 700;
+    border: none;
     outline: none;
     cursor: pointer;
     text-transform: uppercase;
-    transition: all 0.1s ease;
-    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    border-radius: 12px;
     padding: 15px 30px;
     margin: 10px;
-    font-size: 1.3rem; /* Larger Text */
+    font-size: 1.2rem;
     position: relative;
     overflow: hidden;
-    /* Pathfinder Text Effect */
-    -webkit-text-stroke: 1.5px var(--color-dark);
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
-    /* 3D "Juicy" Effect */
-    box-shadow: 0 6px 0 var(--color-dark);
-    transform: translateY(0);
-}
-
-button:active {
-    box-shadow: 0 2px 0 var(--color-dark);
-    transform: translateY(4px);
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
-    color: var(--color-dark);
+    background: linear-gradient(135deg, var(--color-primary), #00aaff);
+    color: #000;
+    box-shadow: 0 0 15px var(--color-primary);
+}
+
+.btn-primary:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 5px var(--color-primary);
 }
 
 .btn-secondary {
-    background-color: #fff;
-    color: var(--color-dark);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--color-text);
 }
 
 .pulse {
@@ -239,22 +220,21 @@ button:active {
 }
 
 @keyframes pulse-animation {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(0, 243, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
 }
 
 /* Main Menu Specifics */
 .coin-display {
     font-size: 1.5rem;
-    color: var(--color-dark);
+    color: var(--color-accent);
     margin-bottom: 2rem;
-    background: #fff;
-    padding: 10px 25px;
-    border-radius: 30px; /* Pill */
-    border: var(--border-width) solid var(--color-dark);
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-    font-weight: 800;
+    text-shadow: 0 0 10px var(--color-accent);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid var(--color-accent);
 }
 
 .bottom-controls {
@@ -267,35 +247,33 @@ button:active {
 }
 
 .badge {
-    background-color: var(--color-danger);
+    background-color: red;
     color: white;
     border-radius: 50%;
-    padding: 4px 8px;
+    padding: 2px 6px;
     font-size: 0.8rem;
     position: absolute;
-    top: -10px;
-    right: -10px;
-    border: 2px solid var(--color-dark);
-    font-weight: bold;
+    top: -5px;
+    right: -5px;
 }
 
 /* HUD Specifics */
 #screen-hud {
     justify-content: flex-start;
     align-items: stretch;
-    pointer-events: none;
+    pointer-events: none; /* Crucial: Let touches pass */
 }
 
 .btn-icon {
     position: absolute;
     top: 15px;
     left: 15px;
-    width: 45px;
-    height: 45px;
-    border-radius: 12px; /* Soft square */
-    background: #fff;
-    border: var(--border-width) solid var(--color-dark);
-    color: var(--color-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
     font-size: 1.2rem;
     display: flex;
     justify-content: center;
@@ -303,69 +281,65 @@ button:active {
     z-index: 100;
     pointer-events: auto;
     cursor: pointer;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    backdrop-filter: blur(4px);
 }
 
 .hud-top-left, .hud-top-center, .hud-top-right {
     position: absolute;
     top: 15px;
-    padding: 8px 15px;
-    background: var(--color-glass);
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.4); /* Glassmorphism */
     backdrop-filter: blur(8px);
-    border-radius: 16px;
-    border: var(--border-width) solid var(--color-dark);
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-    pointer-events: auto;
-    color: var(--color-dark);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    pointer-events: auto; /* Buttons inside HUD clickable */
 }
 
 .hud-top-left {
     left: 15px;
-    top: 75px;
-    max-width: 160px;
+    top: 70px; /* Below pause button */
+    max-width: 150px;
 }
 
 .hud-top-center {
     left: 50%;
     transform: translateX(-50%);
-    padding: 5px 25px;
-    border-radius: 30px; /* Pill */
-    background: #fff;
+    padding: 5px 20px;
+    border-radius: 30px; /* Pill shape */
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .hud-top-right {
     right: 15px;
     text-align: right;
-    min-width: 120px;
-    background: var(--color-glass);
+    min-width: 100px;
 }
 
 #game-timer {
     font-size: 1.8rem;
     font-weight: 900;
-    color: var(--color-dark);
+    color: #fff;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .score-box {
     font-size: 1.1rem;
     font-weight: 800;
-    color: var(--color-tertiary); /* Green for score */
-    -webkit-text-stroke: 1px var(--color-dark);
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    color: var(--color-tertiary);
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
 }
 
 .kills-box {
     font-size: 1rem;
     font-weight: 700;
-    color: var(--color-danger); /* Red for kills */
+    color: var(--color-accent);
 }
 
 .rank-item {
     font-size: 0.9rem;
-    color: var(--color-dark);
-    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -379,7 +353,8 @@ button:active {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 5;
+    z-index: 5; /* Above canvas, below buttons if any */
+    /* Ensure it doesn't block top UI */
     pointer-events: auto;
 }
 
@@ -396,26 +371,23 @@ button:active {
 }
 
 .skin-item {
-    background: #fff;
-    border: var(--border-width) solid var(--color-dark);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     padding: 15px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
 }
 
 .skin-item.selected {
     border-color: var(--color-primary);
-    background: #FFF9C4; /* Light Yellow */
-    box-shadow: 0 0 0 4px var(--color-primary);
-    transform: scale(1.02);
+    box-shadow: 0 0 15px var(--color-primary);
+    background: rgba(0, 243, 255, 0.1);
 }
 
 .skin-item.locked {
-    opacity: 0.6;
-    background: #eee;
+    opacity: 0.5;
     filter: grayscale(1);
 }
 
@@ -424,39 +396,27 @@ button:active {
     width: 80%;
     max-width: 300px;
     margin: 20px 0;
-    background: #fff;
-    padding: 15px;
-    border-radius: 16px;
-    border: var(--border-width) solid var(--color-dark);
 }
 
 .progress-bar-bg {
     width: 100%;
-    height: 14px;
-    background: #ddd;
-    border-radius: 7px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
     overflow: hidden;
-    margin-top: 8px;
-    border: 1px solid var(--color-dark);
+    margin-top: 5px;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: var(--color-tertiary); /* Green */
+    background: var(--color-tertiary);
+    box-shadow: 0 0 10px var(--color-tertiary);
     transition: width 1s ease-out;
-}
-
-.rewards-text {
-    font-weight: 800;
-    color: var(--color-primary); /* Yellow text */
-    -webkit-text-stroke: 1px var(--color-dark);
-    margin-top: 5px;
-    text-align: center;
 }
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
-    h1 { font-size: 2.5rem; }
+    h1 { font-size: 2rem; }
     .btn-primary { padding: 12px 24px; font-size: 1rem; }
     .skin-grid { grid-template-columns: 1fr; }
 }
@@ -467,11 +427,10 @@ button:active {
     margin-bottom: 30px;
 }
 .time-selection h3 {
-    color: var(--color-dark);
+    color: var(--color-primary);
     font-size: 1.2rem;
     margin-bottom: 15px;
-    letter-spacing: 1px;
-    font-weight: 800;
+    letter-spacing: 2px;
 }
 .time-buttons {
     display: flex;
@@ -479,28 +438,28 @@ button:active {
     gap: 15px;
 }
 .btn-time {
-    background: #fff;
-    border: var(--border-width) solid var(--color-dark);
-    color: var(--color-dark);
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
     padding: 15px 25px;
     font-size: 1.2rem;
-    border-radius: 12px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
 }
-.btn-time:hover, .btn-time:active {
+.btn-time:hover {
     background: var(--color-primary);
+    color: #000;
+    box-shadow: 0 0 15px var(--color-primary);
     transform: translateY(-2px);
-    box-shadow: 0 6px 0 var(--color-dark);
 }
 
 /* Loader */
 .loader {
     width: 60px;
     height: 60px;
-    border: 6px solid rgba(255, 255, 255, 0.3);
-    border-top: 6px solid var(--color-primary);
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top: 5px solid var(--color-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 20px;
@@ -520,10 +479,9 @@ button:active {
 
 /* Level Up Screen */
 .levelup-title {
-    font-size: 3.5rem;
+    font-size: 3rem;
     color: var(--color-tertiary);
-    -webkit-text-stroke: 2px var(--color-dark);
-    text-shadow: 4px 4px 0 var(--color-dark);
+    text-shadow: 0 0 20px var(--color-tertiary);
     animation: bounce 0.5s infinite alternate;
 }
 
@@ -533,13 +491,12 @@ button:active {
     gap: 20px;
     flex-wrap: wrap;
     margin-top: 30px;
-    perspective: 1000px;
 }
 
 .upgrade-card {
-    background: #fff;
-    border: var(--border-width) solid var(--color-dark);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
     padding: 20px;
     width: 200px;
     height: 250px;
@@ -549,25 +506,14 @@ button:active {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 0 rgba(0,0,0,0.1); /* Deep shadow */
-
-    /* Entrance */
-    opacity: 0;
-    transform: translateY(50px) rotateX(20deg);
-    animation: card-entrance 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-@keyframes card-entrance {
-    to {
-        opacity: 1;
-        transform: translateY(0) rotateX(0deg);
-    }
+    backdrop-filter: blur(10px);
 }
 
 .upgrade-card:hover {
-    transform: translateY(-15px) scale(1.05);
+    transform: scale(1.1) translateY(-10px);
     border-color: var(--color-primary);
-    background: #FFF9C4;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+    background: rgba(0, 243, 255, 0.1);
 }
 
 .upgrade-icon {
@@ -576,21 +522,17 @@ button:active {
 }
 
 .upgrade-card h3 {
-    color: var(--color-dark);
+    color: #fff;
     font-size: 1.2rem;
     text-transform: uppercase;
     text-align: center;
     margin-bottom: 10px;
-    -webkit-text-stroke: 0px;
-    text-shadow: none;
-    font-weight: 800;
 }
 
 .upgrade-card p {
-    color: #555;
+    color: #ccc;
     font-size: 0.9rem;
     text-align: center;
-    font-weight: 600;
 }
 
 @keyframes bounce {
@@ -608,22 +550,22 @@ button:active {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: rgba(44, 62, 80, 0.8); /* Dark Overlay */
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 2000;
     transition: opacity 0.3s ease;
-    pointer-events: auto;
+    pointer-events: auto; /* Essential because parent #ui-layer is none */
 }
 
 .popup-content {
-    background: #fff;
-    border: var(--border-width) solid var(--color-dark);
+    background: rgba(20, 20, 30, 0.95);
+    border: 2px solid var(--color-primary);
     border-radius: 20px;
     padding: 30px;
     text-align: center;
-    box-shadow: 0 10px 0 rgba(0,0,0,0.2);
+    box-shadow: 0 0 30px var(--color-primary);
     transform: scale(0.8);
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -647,12 +589,68 @@ button:active {
     font-weight: 900;
 }
 
-/* Triple A Mobile Polish */
+/* Updated Level Up Cards */
+.cards-container {
+    flex-direction: row; /* Horizontal */
+    flex-wrap: wrap;
+    gap: 30px;
+    perspective: 1000px; /* For 3D flip effects */
+}
+
+.upgrade-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* Entrance Animation */
+    opacity: 0;
+    transform: translateY(50px) rotateX(20deg);
+    animation: card-entrance 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes card-entrance {
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg);
+    }
+}
+
+.upgrade-card:hover {
+    transform: translateY(-15px) scale(1.05);
+    border-color: var(--color-tertiary);
+    box-shadow: 0 0 20px var(--color-tertiary);
+}
+
+.upgrade-card h3 {
+    font-size: 1.4rem;
+    color: var(--color-tertiary);
+}
+
+/* Mobile Adjustments for Popups/Cards */
 @media (max-width: 600px) {
     .time-grid {
         flex-direction: column;
     }
+    .cards-container {
+        flex-direction: column; /* Stack on mobile if needed, or wrap */
+        align-items: center;
+    }
+    .upgrade-card {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+        min-height: 200px;
+    }
+}
 
+/* Critical Fix: Ensure hidden popups don't block clicks */
+.popup.hidden {
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Triple A Mobile Polish */
+@media (max-width: 600px) {
+    /* Better Upgrade Cards */
     .cards-container {
         flex-direction: column;
         gap: 15px;
@@ -664,7 +662,7 @@ button:active {
         max-width: 320px;
         height: auto;
         min-height: 120px;
-        flex-direction: row;
+        flex-direction: row; /* Horizontal Layout for Mobile */
         padding: 15px;
         justify-content: flex-start;
         text-align: left;
@@ -691,7 +689,7 @@ button:active {
 
     /* HUD Optimization */
     .hud-top-center {
-        top: 60px;
+        top: 60px; /* Move timer below pause button/notch area if needed, or keep top */
         padding: 4px 15px;
     }
 

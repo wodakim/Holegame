@@ -48,48 +48,27 @@ export default class Physics {
                 const propR = prop.radius || 10;
 
                 // Interaction Logic
-                // 1. Can we eat it? (Must be strictly larger - Standard .io)
-                if (hole.radius > propR) {
+                // 1. Can we eat it? (Must be visibly larger)
+                if (hole.radius > propR * 1.1) {
 
                     // Suction Range
                     const pullRadius = hole.radius + propR + 100;
 
                     if (dist < pullRadius) {
                         // Pull Force
-                        // Tuned Formula: Base Force * (Hole Size Factor) / Distance Factor
-                        // Reduced from 2500 back to 1000 to prevent overshooting
-                        const force = ((hole.radius + 50) / (dist + 20)) * 1000 * dt;
+                        // Stronger when closer
+                        const force = (hole.radius / (dist + 10)) * 600 * dt;
                         const nx = dx / dist;
                         const ny = dy / dist;
-                        const step = force;
 
                         // Stop traffic if caught
                         if (prop.velocity) {
-                            prop.velocity.x *= 0.8; // Stronger friction
-                            prop.velocity.y *= 0.8;
+                            prop.velocity.x *= 0.9;
+                            prop.velocity.y *= 0.9;
                         }
 
-                        // Prevent Overshooting: If step is larger than distance, force eat immediately
-                        if (step > dist) {
-                            prop.x = hole.x;
-                            prop.y = hole.y;
-                            // Execute eat logic immediately to prevent NaN physics next frame
-                            prop.markedForDeletion = true;
-
-                            if (prop.propType === 'police') {
-                                hole.shrink(20);
-                            } else {
-                                hole.grow(prop.value || 1);
-                            }
-
-                            if (onEat) onEat(hole, prop);
-                            console.log(`[PHYSICS] EATEN (Overshoot): ${prop.propType}`);
-                            // Exit loop for this prop
-                            return;
-                        } else {
-                            prop.x += nx * step;
-                            prop.y += ny * step;
-                        }
+                        prop.x += nx * force;
+                        prop.y += ny * force;
 
                         // Shake
                         if (prop.shake) {
@@ -103,8 +82,7 @@ export default class Physics {
                         }
 
                         // Eat Logic (Center check)
-                        // Relaxed from 0.5 to 1.0. If the center is inside the hole, it's eaten.
-                        if (dist < hole.radius) {
+                        if (dist < hole.radius * 0.5) {
                             prop.markedForDeletion = true;
 
                             if (prop.propType === 'police') {
@@ -114,7 +92,6 @@ export default class Physics {
                             }
 
                             if (onEat) onEat(hole, prop);
-                            console.log(`[PHYSICS] EATEN (Center): ${prop.propType}`);
                         }
                     }
 
@@ -137,8 +114,8 @@ export default class Physics {
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
                 if (dist < hole.radius) {
-                    // Must be 5% bigger to eat another hole (slightly harder than props)
-                    if (hole.radius > otherHole.radius * 1.05) {
+                    // Must be 10% bigger to eat another hole
+                    if (hole.radius > otherHole.radius * 1.1) {
 
                          // Police Logic
                          if (otherHole.isPolice) {
@@ -155,7 +132,7 @@ export default class Physics {
                     } else {
                         // Elastic collision (Push apart)
                         // Only if sizes are similar
-                        if (hole.radius < otherHole.radius * 1.05) {
+                        if (hole.radius < otherHole.radius * 1.1) {
                             const overlap = (hole.radius + otherHole.radius) - dist;
                             if (overlap > 0) {
                                 const nx = dx / dist;

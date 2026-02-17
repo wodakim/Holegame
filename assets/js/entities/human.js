@@ -25,8 +25,9 @@ export default class Human extends Prop {
                 const distSq = dx*dx + dy*dy;
 
                 if (distSq < scanRange*scanRange) {
-                    // Check size: Threat if hole is strictly bigger (matching physics.js)
-                    if (e.radius > this.radius) {
+                    // Check size: Threat if hole is bigger
+                    // Human Radius is 18. Hole needs ~20 to eat.
+                    if (e.radius > this.radius * 1.1) {
                         const dist = Math.sqrt(distSq);
                         if (dist < minDist) {
                             minDist = dist;
