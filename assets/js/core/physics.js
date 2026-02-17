@@ -69,10 +69,23 @@ export default class Physics {
                             prop.velocity.y *= 0.8;
                         }
 
-                        // Prevent Overshooting: If step is larger than distance, move exactly to center
+                        // Prevent Overshooting: If step is larger than distance, force eat immediately
                         if (step > dist) {
                             prop.x = hole.x;
                             prop.y = hole.y;
+                            // Execute eat logic immediately to prevent NaN physics next frame
+                            prop.markedForDeletion = true;
+
+                            if (prop.propType === 'police') {
+                                hole.shrink(20);
+                            } else {
+                                hole.grow(prop.value || 1);
+                            }
+
+                            if (onEat) onEat(hole, prop);
+
+                            // Exit loop for this prop
+                            return;
                         } else {
                             prop.x += nx * step;
                             prop.y += ny * step;
