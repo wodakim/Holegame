@@ -43,7 +43,11 @@ export default class Prop extends Entity {
         this.propType = type;
         this.value = config.value;
         this.height = config.height;
-        this.isSolid = true; // Most props are solid now for interaction
+
+        // Solid Collision logic:
+        // Only solid if it's a structural object (Building, Shelter, etc)
+        // Trash, Humans, and Small Vehicles should be soft (pass through if not eaten)
+        this.isSolid = ['building', 'shelter', 'small_shop', 'pole', 'fence', 'kiosk', 'bench', 'mailbox', 'trash_bin'].includes(type);
 
         // Random Colors for generic types
         if (this.color === 'random') {
