@@ -56,8 +56,9 @@ export default class Physics {
 
                     if (dist < pullRadius) {
                         // Pull Force
-                        // Stronger when closer
-                        const force = (hole.radius / (dist + 10)) * 600 * dt;
+                        // Stronger when closer. Significantly increased force for "Juicy" feel.
+                        // Formula: Base Force * (Hole Size Factor) / Distance Factor
+                        const force = ((hole.radius + 50) / (dist + 20)) * 2500 * dt;
                         const nx = dx / dist;
                         const ny = dy / dist;
 
@@ -82,7 +83,8 @@ export default class Physics {
                         }
 
                         // Eat Logic (Center check)
-                        if (dist < hole.radius * 0.5) {
+                        // Relaxed from 0.5 to 1.0. If the center is inside the hole, it's eaten.
+                        if (dist < hole.radius) {
                             prop.markedForDeletion = true;
 
                             if (prop.propType === 'police') {
