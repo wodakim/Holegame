@@ -1,208 +1,232 @@
 import Entity from './entity.js';
 
 export default class Prop extends Entity {
-    constructor(x, y, type, value, width, height, color) {
-        // radius is used for collision approximation
-        const radius = Math.max(width, height) / 2;
+    // Static configuration for Prop Types
+    static TYPES = {
+        // Tier 1: Trash / Small Objects
+        'bottle': { radius: 5, value: 1, color: '#33ff33', isSolid: false, height: 10 },
+        'cone':   { radius: 8, value: 2, color: '#ffae00', isSolid: false, height: 15 },
+
+        // Tier 2: Street Furniture
+        'pole':   { radius: 10, value: 5, color: '#888888', isSolid: true, height: 60 },
+        'fence':  { radius: 12, value: 5, color: '#aaaaaa', isSolid: true, height: 20 },
+
+        // Tier 3: Living Beings (Simple shapes)
+        'human':  { radius: 15, value: 10, color: '#ffccaa', isSolid: false, height: 35 }, // Passable
+        'bench':  { radius: 18, value: 15, color: '#8B4513', isSolid: true, height: 15 },
+
+        // Tier 4: Vehicles (Small)
+        'car':    { radius: 30, value: 25, color: 'random', isSolid: false, height: 25 }, // Passable (under)
+
+        // Tier 5: Large Vehicles / Structures
+        'bus':    { radius: 50, value: 50, color: '#ffae00', isSolid: false, height: 50 }, // Passable (under)
+        'truck':  { radius: 55, value: 60, color: '#ffffff', isSolid: false, height: 60 }, // Passable (under)
+        'shelter':{ radius: 60, value: 70, color: '#444444', isSolid: true, height: 50 }, // Bus Stop - Solid
+
+        // Tier 6: Buildings
+        'building': { radius: 150, value: 200, color: 'random', isSolid: true, height: 200 }
+    };
+
+    constructor(x, y, type) {
+        const config = Prop.TYPES[type] || Prop.TYPES['bottle'];
+        const radius = config.radius;
+        let color = config.color;
+
+        if (color === 'random') {
+            if (type === 'car') {
+                const colors = ['#ff0055', '#0055ff', '#00ffaa', '#aa00ff', '#ffffff'];
+                color = colors[Math.floor(Math.random() * colors.length)];
+            } else if (type === 'building') {
+                const bColors = ['#00ffff', '#ff00ff', '#39ff14', '#ffffff'];
+                color = bColors[Math.floor(Math.random() * bColors.length)];
+            }
+        }
+
         super(x, y, radius, color);
 
         this.type = 'prop';
-        this.propType = type; // 'cone', 'car', 'building', 'truck', 'bus'
-        this.value = value; // Score value
-        this.width = width;
-        this.height = height;
+        this.propType = type;
+        this.value = config.value;
+        this.height = config.height;
+        this.isSolid = config.isSolid; // Blocks movement if hole is small
+
+        // Derived dimensions for drawing
+        this.width = radius * 2;
+        if (type === 'car' || type === 'bus' || type === 'truck') {
+            this.length = radius * 2.5; // Longer
+            this.width = radius * 1.2;
+        } else if (type === 'building') {
+            this.width = radius * 2;
+            this.length = radius * 2;
+        }
+
         this.scale = 1;
-        this.rotation = Math.random() * Math.PI * 2;
+        this.rotation = (type === 'building' || type === 'shelter') ? 0 : Math.random() * Math.PI * 2;
+
+        // Shake effect for suction
+        this.shake = { x: 0, y: 0 };
     }
 
     draw(ctx) {
         ctx.save();
-        // Apply shake before rotation/scale but after position?
-        // Actually, shake is displacement in world space.
-        // So: translate(x + shake.x, y + shake.y).
         ctx.translate(this.x + this.shake.x, this.y + this.shake.y);
-
         ctx.rotate(this.rotation);
         ctx.scale(this.scale, this.scale);
 
-        if (this.propType === 'cone') {
-            // Isometric Cone (Triangle + Ellipse base)
-            ctx.fillStyle = '#ffae00';
+        if (this.propType === 'bottle') {
+            // Simple Cylinder
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
             ctx.beginPath();
-            ctx.moveTo(0, -this.height/2);
-            ctx.lineTo(this.width/2, this.height/2);
-            ctx.lineTo(-this.width/2, this.height/2);
-            ctx.closePath();
+            ctx.ellipse(0, 0, 3, 3, 0, 0, Math.PI*2);
             ctx.fill();
 
-            // Base shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillStyle = this.color;
+            ctx.fillRect(-2, -8, 4, 8);
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(-1, -6, 1, 4);
+            ctx.globalAlpha = 1;
+        }
+        else if (this.propType === 'cone') {
+            // Cone Logic
+             ctx.fillStyle = '#ffae00';
+             ctx.beginPath();
+             ctx.moveTo(0, -10); // Top (shifted for iso?)
+             // Simple circle for top-down for now, or approximate
+             // Let's stick to the previous drawing logic roughly
+             ctx.beginPath();
+             ctx.arc(0, 0, 6, 0, Math.PI*2);
+             ctx.fill();
+             ctx.fillStyle = '#ffcc00';
+             ctx.beginPath();
+             ctx.arc(0, 0, 3, 0, Math.PI*2);
+             ctx.fill();
+        }
+        else if (this.propType === 'pole') {
+            // Tall thin cylinder (Circle with shadow)
+            ctx.fillStyle = '#555';
             ctx.beginPath();
-            ctx.ellipse(0, this.height/2, this.width/2, this.width/4, 0, 0, Math.PI * 2);
+            ctx.arc(0, 0, 4, 0, Math.PI*2);
+            ctx.fill();
+            // Lamp glow?
+            ctx.fillStyle = 'rgba(255, 255, 200, 0.5)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI*2);
             ctx.fill();
         }
-        else if (['car', 'police', 'truck', 'bus'].includes(this.propType)) {
-            // Common Vehicle Drawing
-            const w = Math.max(this.width, this.height); // Length
-            const h = Math.min(this.width, this.height); // Width
-            const isPolice = this.propType === 'police';
-            const isTruck = this.propType === 'truck';
-            const isBus = this.propType === 'bus';
-
-            // Headlights
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.15)';
+        else if (this.propType === 'human') {
+            // Head and Shoulders
+            ctx.fillStyle = this.color; // Skin/Shirt
             ctx.beginPath();
-            const beamLength = 100;
-            const beamSpread = h * 1.5;
-            ctx.moveTo(w/2, -h/3);
-            ctx.lineTo(w/2 + beamLength, -beamSpread);
-            ctx.arc(w/2, 0, beamLength, -Math.PI/6, Math.PI/6);
-            ctx.lineTo(w/2, h/3);
+            ctx.arc(0, 0, 6, 0, Math.PI*2); // Head
             ctx.fill();
 
-            // Taillights
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillStyle = '#333'; // Shoulders/Body
             ctx.beginPath();
-            ctx.arc(-w/2, 0, 20, 0, Math.PI * 2);
+            ctx.ellipse(0, 6, 8, 4, 0, 0, Math.PI*2);
             ctx.fill();
-
-            // Body Color
-            ctx.fillStyle = this.color;
-            if (isPolice) ctx.fillStyle = '#111';
-
-            // Chassis
-            const cornerRadius = (isTruck || isBus) ? 2 : 8;
-            this.roundRect(ctx, -w/2, -h/2, w, h, cornerRadius);
-            ctx.fill();
-
-            // Details
-            ctx.fillStyle = '#222';
-            if (isTruck) {
-                // Cab
-                this.roundRect(ctx, w/4, -h/2 + 2, w/4 - 2, h - 4, 2);
-                ctx.fill();
-                // Trailer line
-                ctx.fillStyle = '#111';
-                ctx.fillRect(w/4 - 2, -h/2, 2, h);
-            } else if (isBus) {
-                // Long windows
-                ctx.fillStyle = '#444';
-                this.roundRect(ctx, -w/2 + 5, -h/2 + 5, w - 10, h - 10, 2);
-                ctx.fill();
-            } else {
-                // Car/Police Roof
-                this.roundRect(ctx, -w/4, -h/2 + 5, w/2, h - 10, 4);
-                ctx.fill();
-            }
-
-            if (isPolice) {
-                const blink = Math.floor(Date.now() / 150) % 2 === 0;
-                ctx.shadowBlur = 20;
-                ctx.fillStyle = blink ? '#ff0000' : '#0000ff';
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.fillRect(-5, -h/4, 10, h/2);
-                ctx.shadowBlur = 0;
-            }
+        }
+        else if (['car', 'bus', 'truck', 'police'].includes(this.propType)) {
+             this.drawVehicle(ctx);
         }
         else if (this.propType === 'building') {
-            // "True" Isometric/2.5D Effect
-            // Roof is at (0,0) - centered
-            // Base is shifted by (depthX, depthY)
-            const w = this.width;
-            const h = this.height;
-            const depth = 40;
-            const shiftX = 20; // Shift right
-            const shiftY = 30; // Shift down
+             this.drawBuilding(ctx);
+        }
+        else if (this.propType === 'shelter') {
+             // Bus Stop
+             ctx.fillStyle = 'rgba(0,0,0,0.3)';
+             ctx.fillRect(-20, -10, 40, 20); // Shadow
 
-            // Calculate corners of Roof
-            const tl = {x: -w/2, y: -h/2}; // Top-Left
-            const tr = {x: w/2, y: -h/2};  // Top-Right
-            const bl = {x: -w/2, y: h/2};  // Bottom-Left
-            const br = {x: w/2, y: h/2};   // Bottom-Right
+             ctx.fillStyle = '#888';
+             ctx.fillRect(-20, -10, 5, 20); // Left Wall
+             ctx.fillRect(15, -10, 5, 20); // Right Post
+             ctx.fillRect(-20, -10, 40, 2); // Back Wall
 
-            // Calculate corners of Base (Shifted)
-            const b_br = {x: br.x + shiftX, y: br.y + shiftY};
-            const b_tr = {x: tr.x + shiftX, y: tr.y + shiftY};
-            const b_bl = {x: bl.x + shiftX, y: bl.y + shiftY};
-
-            // 1. Draw Shadows (Base footprint)
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
-            ctx.beginPath();
-            ctx.moveTo(tl.x + shiftX, tl.y + shiftY);
-            ctx.lineTo(tr.x + shiftX, tr.y + shiftY);
-            ctx.lineTo(br.x + shiftX, br.y + shiftY);
-            ctx.lineTo(bl.x + shiftX, bl.y + shiftY);
-            ctx.closePath();
-            ctx.fill();
-
-            // 2. Draw South Face (Front)
-            // Connect bl -> br -> b_br -> b_bl
-            ctx.fillStyle = '#0a0a0a'; // Darkest
-            ctx.beginPath();
-            ctx.moveTo(bl.x, bl.y);
-            ctx.lineTo(br.x, br.y);
-            ctx.lineTo(b_br.x, b_br.y);
-            ctx.lineTo(b_bl.x, b_bl.y);
-            ctx.closePath();
-            ctx.fill();
-
-            // South Face Details (Windows)
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = 0.3;
-            for(let i=0; i<3; i++) {
-                // Interpolate
-                const startX = bl.x + (br.x - bl.x) * (0.2 + i*0.25);
-                const startY = bl.y + (br.y - bl.y) * (0.2 + i*0.25);
-                ctx.fillRect(startX, startY, 4, shiftY * 0.8);
-            }
-            ctx.globalAlpha = 1.0;
-
-
-            // 3. Draw East Face (Side)
-            // Connect tr -> br -> b_br -> b_tr
-            ctx.fillStyle = '#1a1a1a'; // Slightly lighter
-            ctx.beginPath();
-            ctx.moveTo(tr.x, tr.y);
-            ctx.lineTo(br.x, br.y);
-            ctx.lineTo(b_br.x, b_br.y);
-            ctx.lineTo(b_tr.x, b_tr.y);
-            ctx.closePath();
-            ctx.fill();
-
-             // East Face Details
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = 0.2;
-            for(let i=0; i<3; i++) {
-                 const startY = tr.y + (br.y - tr.y) * (0.2 + i*0.25);
-                 ctx.fillRect(tr.x, startY + 5, shiftX * 0.8, 2);
-            }
-            ctx.globalAlpha = 1.0;
-
-
-            // 4. Draw Roof (Top)
-            // Drawn at normal position (x,y)
-            ctx.fillStyle = '#111';
-            ctx.fillRect(-w/2, -h/2, w, h);
-
-            // Neon Edge
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = this.color;
-            ctx.strokeRect(-w/2, -h/2, w, h);
-
-            // Roof Grid
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = 0.4;
-            ctx.fillRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10);
-            ctx.globalAlpha = 1.0;
-            ctx.shadowBlur = 0;
-
-            // Reset Shadow
-            ctx.shadowColor = 'transparent';
+             ctx.fillStyle = '#444'; // Roof
+             ctx.fillRect(-22, -12, 44, 24);
+        }
+        else {
+             // Fallback
+             ctx.fillStyle = this.color;
+             ctx.beginPath();
+             ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+             ctx.fill();
         }
 
         ctx.restore();
+    }
+
+    drawVehicle(ctx) {
+        const w = this.length || 40;
+        const h = this.width || 20;
+        const isTruck = this.propType === 'truck';
+        const isBus = this.propType === 'bus';
+
+        // Headlights
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(w/2, -h/3);
+        ctx.lineTo(w/2 + 60, -h); // Beam
+        ctx.lineTo(w/2 + 60, h);
+        ctx.lineTo(w/2, h/3);
+        ctx.fill();
+
+        // Body
+        ctx.fillStyle = this.color;
+        this.roundRect(ctx, -w/2, -h/2, w, h, isBus ? 2 : 5);
+        ctx.fill();
+
+        // Roof/Windshield
+        ctx.fillStyle = '#222';
+        if (isTruck) {
+             ctx.fillRect(w/4, -h/2 + 2, w/4 - 2, h - 4); // Cab
+        } else {
+             this.roundRect(ctx, -w/4, -h/2 + 4, w/2, h - 8, 3);
+             ctx.fill();
+        }
+    }
+
+    drawBuilding(ctx) {
+        const w = this.width;
+        const h = this.length; // Square base usually
+        const height3D = this.height; // Visual height
+
+        // 2.5D Projection
+        // We are drawing top-down. To simulate height, we draw the roof offset from the base.
+        // BUT, if we want to slide against the base, the "Hitbox" (x,y) should be the Base.
+        // So we draw the base at 0,0. And the roof offset.
+        // Direction of offset depends on camera? Simplified: fixed offset or based on position.
+        // Fixed offset (Isometric-ish) looks okay.
+
+        const shiftX = 0; // Centered
+        const shiftY = -height3D / 2; // Upwards visually
+
+        // Roof
+        ctx.fillStyle = '#111';
+        ctx.fillRect(-w/2 + shiftX, -h/2 + shiftY, w, h);
+
+        // Neon Edge
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 4;
+        ctx.strokeRect(-w/2 + shiftX, -h/2 + shiftY, w, h);
+
+        // Sides (Fake 3D)
+        // Connect corners
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(-w/2, -h/2); // Base TL
+        ctx.lineTo(-w/2 + shiftX, -h/2 + shiftY); // Roof TL
+        ctx.lineTo(w/2 + shiftX, -h/2 + shiftY); // Roof TR
+        ctx.lineTo(w/2, -h/2); // Base TR
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // Grid on Roof
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = 0.2;
+        ctx.fillRect(-w/2 + shiftX + 10, -h/2 + shiftY + 10, w - 20, h - 20);
+        ctx.globalAlpha = 1.0;
     }
 
     roundRect(ctx, x, y, w, h, r) {
