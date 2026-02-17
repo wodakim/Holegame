@@ -44,88 +44,112 @@ export default class MapManager {
         const centerX = baseX + this.chunkSize / 2;
         const centerY = baseY + this.chunkSize / 2;
 
-        // 1. Determine Block Type
+        // Realistic City Logic
+        // 1. Roads are clear zones at edges (0 and 600). Do NOT spawn static props there.
+        // 2. Sidewalks are at 60px inset.
+        // 3. Central block is 480x480.
+
+        // 1. Central Block Content
         const typeRoll = Math.random();
 
-        if (typeRoll < 0.6) {
-            // City Block: Buildings
+        if (typeRoll < 0.7) {
+            // City Block: Dense Buildings (Solid Blocks)
+            // Create a "City Block" feel by filling the center effectively
             if (Math.random() < 0.5) {
-                // 1 Big Building
+                // 1 Massive Building
                 const b = new Prop(centerX, centerY, 'building');
                 b.width = 300;
                 b.length = 300;
-                b.radius = 160; // Needs to be big enough to block
+                b.radius = 200;
                 entities.push(b);
             } else {
-                // 4 Small Buildings
-                const offset = 90;
+                // 4 Quadrant Buildings (More alley-like)
+                const offset = 100;
                 [[-1,-1], [1,-1], [-1,1], [1,1]].forEach(([dx, dy]) => {
                     const b = new Prop(centerX + dx*offset, centerY + dy*offset, 'building');
-                    b.width = 130;
-                    b.length = 130;
-                    b.radius = 70;
+                    b.width = 150;
+                    b.length = 150;
+                    b.radius = 100;
                     entities.push(b);
                 });
             }
-        } else if (typeRoll < 0.8) {
-            // Plaza / Park
+        } else if (typeRoll < 0.85) {
+            // Plaza / Park (Open space with organized props)
+            // Central Feature
             const fountain = new Prop(centerX, centerY, 'pole');
-            fountain.scale = 2; // Fountain
+            fountain.scale = 2;
             entities.push(fountain);
 
-            // Benches in circle
-            for(let i=0; i<8; i++) {
-                const angle = i * Math.PI/4;
+            // Organized Benches
+            for(let i=0; i<4; i++) {
+                const angle = i * Math.PI/2;
                 const dist = 120;
                 entities.push(new Prop(centerX + Math.cos(angle)*dist, centerY + Math.sin(angle)*dist, 'bench'));
             }
-            // Some humans walking
-            for(let i=0; i<5; i++) {
+            // Some pedestrians
+            for(let i=0; i<3; i++) {
                 entities.push(new Prop(centerX + (Math.random()-0.5)*200, centerY + (Math.random()-0.5)*200, 'human'));
             }
         } else {
-            // Parking Lot or Construction
-            for(let i=0; i<8; i++) {
-                 // Random parked cars
-                 entities.push(new Prop(centerX + (Math.random()-0.5)*300, centerY + (Math.random()-0.5)*300, 'car'));
+            // Parking Lot (Cars)
+            // Grid of cars
+            for(let row=-1; row<=1; row++) {
+                for(let col=-1; col<=1; col++) {
+                    if (row===0 && col===0) continue; // Lane
+                    entities.push(new Prop(centerX + col*100, centerY + row*120, 'car'));
+                }
             }
-            entities.push(new Prop(centerX - 150, centerY - 150, 'cone'));
-            entities.push(new Prop(centerX + 150, centerY + 150, 'cone'));
         }
 
-        // 2. Sidewalk Props (Perimeter)
-        // Road is at edges (0 and 600 relative to chunk).
-        // Sidewalk is 60px in.
-        const min = 60;
-        const max = this.chunkSize - 60;
+        // 2. Sidewalk Props (Organized, Less Clutter)
+        // Sidewalk is 60px in from edges.
+        const min = 70;
+        const max = this.chunkSize - 70;
+        const sidewalkStep = 100; // Spacing
 
-        // Spawn items along the sidewalk paths
-        const step = 80;
-        for (let x = min; x <= max; x += step) {
-             this.trySpawnSidewalkItem(baseX + x, baseY + min, entities);
-             this.trySpawnSidewalkItem(baseX + x, baseY + max, entities);
+        // Top & Bottom Sidewalks
+        for (let x = min; x <= max; x += sidewalkStep) {
+             this.spawnSidewalkCluster(baseX + x, baseY + min, entities); // Top
+             this.spawnSidewalkCluster(baseX + x, baseY + max, entities); // Bottom
         }
-        for (let y = min; y <= max; y += step) {
-             this.trySpawnSidewalkItem(baseX + min, baseY + y, entities);
-             this.trySpawnSidewalkItem(baseX + max, baseY + y, entities);
+        // Left & Right Sidewalks
+        for (let y = min; y <= max; y += sidewalkStep) {
+             this.spawnSidewalkCluster(baseX + min, baseY + y, entities); // Left
+             this.spawnSidewalkCluster(baseX + max, baseY + y, entities); // Right
         }
 
         // 3. Register
         this.activeChunks.set(`${cx},${cy}`, entities);
-        this.gameManager.entities.push(...entities);
+        if (this.gameManager.entities) {
+            this.gameManager.entities.push(...entities);
+        }
     }
 
-    trySpawnSidewalkItem(x, y, list) {
-        if (Math.random() > 0.4) return; // 60% empty space
+    spawnSidewalkCluster(x, y, list) {
+        // Reduced Density: 80% Empty
+        if (Math.random() > 0.2) return;
 
         const roll = Math.random();
-        // Vary items
-        if (roll < 0.3) list.push(new Prop(x, y, 'human'));
-        else if (roll < 0.5) list.push(new Prop(x, y, 'bottle'));
-        else if (roll < 0.65) list.push(new Prop(x, y, 'pole'));
-        else if (roll < 0.75) list.push(new Prop(x, y, 'bench'));
-        else if (roll < 0.8) list.push(new Prop(x, y, 'shelter')); // Rare bus stop
-        else list.push(new Prop(x, y, 'cone'));
+
+        // Organized Groups
+        if (roll < 0.4) {
+            // Trash Cluster (Bottles/Cones) - Good for early game
+            list.push(new Prop(x, y, 'bottle'));
+            list.push(new Prop(x + 10, y + 5, 'bottle'));
+            if(Math.random() < 0.5) list.push(new Prop(x - 5, y + 10, 'cone'));
+        } else if (roll < 0.6) {
+            // Street Light
+            list.push(new Prop(x, y, 'pole'));
+        } else if (roll < 0.7) {
+            // Bus Stop (Rare)
+            list.push(new Prop(x, y, 'shelter'));
+        } else if (roll < 0.85) {
+            // Human
+            list.push(new Prop(x, y, 'human'));
+        } else {
+            // Kiosk
+            list.push(new Prop(x, y, 'kiosk'));
+        }
     }
 
     despawnChunk(key) {
@@ -136,19 +160,13 @@ export default class MapManager {
         }
     }
 
-    // Helper to get random road position for TrafficManager
     getRandomRoadPosition(playerX, playerY, range=2000) {
-        // Return a coordinate that aligns with road grid (multiples of 600)
-        // Near player
         const cx = Math.floor(playerX / this.chunkSize);
         const cy = Math.floor(playerY / this.chunkSize);
 
-        // Pick a road line (vertical or horizontal)
         const isVert = Math.random() > 0.5;
         if (isVert) {
-            // x = multiple of 600
-            // Pick x within range
-            const offsetIdx = Math.floor((Math.random() - 0.5) * 4); // -2 to 2
+            const offsetIdx = Math.floor((Math.random() - 0.5) * 4);
             const x = (cx + offsetIdx) * this.chunkSize;
             const y = playerY + (Math.random() - 0.5) * range;
             return { x, y, isVert: true };

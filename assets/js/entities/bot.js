@@ -73,16 +73,11 @@ export default class Bot extends Hole {
             }
         });
 
-        // Virtual Foraging: If lonely, grow slowly
+        // Virtual Foraging: If lonely, grow extremely slowly (Hardcore Pace)
         if (!foundSomething) {
-            // Simulate eating small props occasionally
-            // Rate depends on size (bigger bots find more food?)
-            // Base: 10 points per second
-            // Multiplier logic: grow(10 * dt)
-            // But 'grow' uses score += amount.
-            // Let's say 1 small prop (value 5) every 0.5s.
-            if (Math.random() < dt * 2) {
-                this.grow(5);
+            // Reduced Rate: 1 small prop (value 1) every 2 seconds
+            if (Math.random() < dt * 0.5) {
+                this.grow(1);
             }
         }
 
