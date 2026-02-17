@@ -556,6 +556,7 @@ button {
     align-items: center;
     z-index: 2000;
     transition: opacity 0.3s ease;
+    pointer-events: auto; /* Essential because parent #ui-layer is none */
 }
 
 .popup-content {
