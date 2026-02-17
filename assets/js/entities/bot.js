@@ -25,13 +25,18 @@ export default class Bot extends Hole {
             this.levelUp();
         }
 
+        // Virtual Foraging Logic (for off-screen growth)
+        // If no entities are near (which happens if MapManager despawned chunks around us),
+        // we simulate finding food based on current size.
+        // Check if we found ANY props or holes in scan range.
+        const scanRadius = 600;
+        let foundSomething = false;
+
         // AI Logic
         let closestThreat = null;
         let closestFood = null;
         let minThreatDist = Infinity;
         let minFoodDist = Infinity;
-
-        const scanRadius = 600;
 
         entities.forEach(entity => {
             if (entity === this) return;
@@ -44,6 +49,7 @@ export default class Bot extends Hole {
             if (distSq > scanRadius * scanRadius) return;
 
             const dist = Math.sqrt(distSq);
+            foundSomething = true;
 
             if (entity.type === 'hole') {
                 if (entity.radius > this.radius * 1.1) {
@@ -67,6 +73,19 @@ export default class Bot extends Hole {
             }
         });
 
+        // Virtual Foraging: If lonely, grow slowly
+        if (!foundSomething) {
+            // Simulate eating small props occasionally
+            // Rate depends on size (bigger bots find more food?)
+            // Base: 10 points per second
+            // Multiplier logic: grow(10 * dt)
+            // But 'grow' uses score += amount.
+            // Let's say 1 small prop (value 5) every 0.5s.
+            if (Math.random() < dt * 2) {
+                this.grow(5);
+            }
+        }
+
         // Decision
         if (closestThreat && minThreatDist < 400) {
             this.state = 'flee';
@@ -87,7 +106,7 @@ export default class Bot extends Hole {
             const dy = this.y - this.target.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
             if (dist > 0) {
-                vx = (dx / dist) * this.currentSpeed; // Use currentSpeed (affected by upgrades/size)
+                vx = (dx / dist) * this.currentSpeed;
                 vy = (dy / dist) * this.currentSpeed;
             }
         } else if (this.state === 'chase') {
@@ -113,18 +132,11 @@ export default class Bot extends Hole {
     }
 
     levelUp() {
-        // Increase threshold identically to player
         const increment = this.level * 1500;
         this.nextThreshold += increment;
         this.level++;
 
-        // Pick random upgrade
         const choice = this.upgradePool[Math.floor(Math.random() * this.upgradePool.length)];
         this.addUpgrade(choice);
-
-        // Optional: Visual cue for bot leveling up?
-        // Maybe a particle burst or floating text "LEVEL UP!"
-        // But GameManager handles text... Bot can't spawn text directly unless we pass GameManager.
-        // We can just rely on size change/speed change being visible.
     }
 }

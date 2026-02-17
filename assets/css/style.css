@@ -647,3 +647,53 @@ button {
     pointer-events: none;
     z-index: -1;
 }
+
+/* Triple A Mobile Polish */
+@media (max-width: 600px) {
+    /* Better Upgrade Cards */
+    .cards-container {
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .upgrade-card {
+        width: 80vw;
+        max-width: 320px;
+        height: auto;
+        min-height: 120px;
+        flex-direction: row; /* Horizontal Layout for Mobile */
+        padding: 15px;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .upgrade-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0;
+        margin-right: 20px;
+        width: 50px;
+        text-align: center;
+    }
+
+    .upgrade-card h3 {
+        font-size: 1.1rem;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+
+    .upgrade-card p {
+        font-size: 0.85rem;
+        text-align: left;
+    }
+
+    /* HUD Optimization */
+    .hud-top-center {
+        top: 60px; /* Move timer below pause button/notch area if needed, or keep top */
+        padding: 4px 15px;
+    }
+
+    #game-timer {
+        font-size: 1.4rem;
+    }
+}
