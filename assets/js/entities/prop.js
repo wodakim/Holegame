@@ -3,38 +3,38 @@ import Entity from './entity.js';
 export default class Prop extends Entity {
     // Static configuration for Prop Types
     static TYPES = {
-        // Tier 1: Trash / Small Objects (Eatable by 25+ hole)
-        'bottle': { radius: 5, value: 1, color: '#33ff33', isSolid: false, height: 10 }, // Hole 25 can eat (5*1.1 = 5.5 < 25)
+        // Tier 1: Trash / Small Objects (Eatable by 15-20)
+        'bottle': { radius: 5, value: 1, color: '#33ff33', isSolid: false, height: 10 },
         'cone':   { radius: 8, value: 2, color: '#ffae00', isSolid: false, height: 15 },
+        'mailbox':{ radius: 10, value: 3, color: '#0055ff', isSolid: true, height: 15 }, // New
 
-        // Tier 2: Street Furniture (Eatable by ~20-30+ hole)
-        // Pole R=10 -> Need Hole ~11. Player starts at 25. So Eatable immediately?
-        // User wants "commencer très petit".
-        // If Player is 25, they can eat up to ~22 radius.
-        // Let's make Tier 2 slightly harder.
-        // Pole R=12 -> Need 13.2. Okay.
-        // Let's adjust Player Start to 20? No, 25 is fine if we scale props up slightly.
-
-        'pole':   { radius: 12, value: 5, color: '#888888', isSolid: true, height: 60 }, // Solid!
+        // Tier 2: Street Furniture (Eatable by 20-30)
+        'pole':   { radius: 12, value: 5, color: '#888888', isSolid: true, height: 60 },
         'fence':  { radius: 15, value: 8, color: '#aaaaaa', isSolid: true, height: 20 },
+        'trash_bin': { radius: 18, value: 10, color: '#225522', isSolid: true, height: 20 }, // New
 
-        // Tier 3: Living Beings (Eatable by ~40+)
+        // Tier 3: Living Beings (Eatable by 30-40)
         'human':  { radius: 18, value: 15, color: '#ffccaa', isSolid: false, height: 35 },
         'bench':  { radius: 20, value: 20, color: '#8B4513', isSolid: true, height: 15 },
+        'motorcycle': { radius: 28, value: 30, color: '#ff0000', isSolid: false, height: 20 }, // New
 
-        // Tier 3.5: Small Structures / Kiosks (Bridge gap to cars)
+        // Tier 3.5: Small Structures / Kiosks (Eatable by 40-50)
         'kiosk':  { radius: 35, value: 40, color: '#ff0055', isSolid: true, height: 40 },
 
-        // Tier 4: Vehicles (Eatable by ~60+)
+        // Tier 4: Vehicles (Eatable by 50-70)
         'car':    { radius: 45, value: 80, color: 'random', isSolid: false, height: 25 },
+        'van':    { radius: 55, value: 120, color: '#ffffff', isSolid: false, height: 35 }, // New
 
-        // Tier 5: Large Vehicles (Eatable by ~100+)
+        // Tier 5: Large Vehicles (Eatable by 70-100)
         'bus':    { radius: 60, value: 150, color: '#ffae00', isSolid: false, height: 50 },
         'truck':  { radius: 70, value: 180, color: '#ffffff', isSolid: false, height: 60 },
 
         'shelter':{ radius: 80, value: 250, color: '#444444', isSolid: true, height: 50 },
 
-        // Tier 6: Buildings (Eatable by ~250+)
+        // Tier 5.5: Medium Structures
+        'small_shop': { radius: 120, value: 500, color: '#00aaaa', isSolid: true, height: 80 }, // New
+
+        // Tier 6: Buildings (Eatable by 250+)
         'building': { radius: 200, value: 1000, color: 'random', isSolid: true, height: 300 }
     };
 
@@ -63,16 +63,20 @@ export default class Prop extends Entity {
 
         // Derived dimensions for drawing
         this.width = radius * 2;
-        if (type === 'car' || type === 'bus' || type === 'truck') {
+        if (['car', 'bus', 'truck', 'van', 'motorcycle'].includes(type)) {
             this.length = radius * 2.5;
             this.width = radius * 1.2;
-        } else if (type === 'building' || type === 'kiosk') {
+            if (type === 'motorcycle') {
+                this.length = radius * 2;
+                this.width = radius * 0.8;
+            }
+        } else if (['building', 'kiosk', 'small_shop'].includes(type)) {
             this.width = radius * 2;
             this.length = radius * 2;
         }
 
         this.scale = 1;
-        this.rotation = (type === 'building' || type === 'shelter' || type === 'kiosk') ? 0 : Math.random() * Math.PI * 2;
+        this.rotation = (['building', 'shelter', 'kiosk', 'small_shop'].includes(type)) ? 0 : Math.random() * Math.PI * 2;
 
         this.shake = { x: 0, y: 0 };
     }
@@ -95,6 +99,24 @@ export default class Prop extends Entity {
             ctx.globalAlpha = 0.5;
             ctx.fillRect(-1, -6, 1, 4);
             ctx.globalAlpha = 1;
+        }
+        else if (this.propType === 'mailbox') {
+            ctx.fillStyle = '#0033cc';
+            ctx.fillRect(-5, -5, 10, 10); // Base
+            ctx.fillStyle = this.color;
+            ctx.fillRect(-6, -12, 12, 12); // Box
+            ctx.fillStyle = '#fff'; // Slot
+            ctx.fillRect(-4, -10, 8, 2);
+        }
+        else if (this.propType === 'trash_bin') {
+            ctx.fillStyle = '#113311';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 7, 0, Math.PI*2);
+            ctx.fill();
         }
         else if (this.propType === 'cone') {
              ctx.fillStyle = '#ffae00';
@@ -127,10 +149,10 @@ export default class Prop extends Entity {
             ctx.ellipse(0, 6, 8, 4, 0, 0, Math.PI*2);
             ctx.fill();
         }
-        else if (['car', 'bus', 'truck', 'police'].includes(this.propType)) {
+        else if (['car', 'bus', 'truck', 'police', 'van', 'motorcycle'].includes(this.propType)) {
              this.drawVehicle(ctx);
         }
-        else if (this.propType === 'building' || this.propType === 'kiosk') {
+        else if (['building', 'kiosk', 'small_shop'].includes(this.propType)) {
              this.drawBuilding(ctx);
         }
         else if (this.propType === 'shelter') {
@@ -158,22 +180,29 @@ export default class Prop extends Entity {
         const h = this.width || 20;
         const isTruck = this.propType === 'truck';
         const isBus = this.propType === 'bus';
+        const isMoto = this.propType === 'motorcycle';
 
-        ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
-        ctx.beginPath();
-        ctx.moveTo(w/2, -h/3);
-        ctx.lineTo(w/2 + 60, -h);
-        ctx.lineTo(w/2 + 60, h);
-        ctx.lineTo(w/2, h/3);
-        ctx.fill();
+        if (!isMoto) {
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(w/2, -h/3);
+            ctx.lineTo(w/2 + 60, -h);
+            ctx.lineTo(w/2 + 60, h);
+            ctx.lineTo(w/2, h/3);
+            ctx.fill();
+        }
 
         ctx.fillStyle = this.color;
-        this.roundRect(ctx, -w/2, -h/2, w, h, isBus ? 2 : 5);
+        this.roundRect(ctx, -w/2, -h/2, w, h, isBus ? 2 : (isMoto ? 2 : 5));
         ctx.fill();
 
         ctx.fillStyle = '#222';
         if (isTruck) {
              ctx.fillRect(w/4, -h/2 + 2, w/4 - 2, h - 4);
+        } else if (isMoto) {
+             ctx.fillRect(-w/4, -h/4, w/2, h/2); // Seat/Engine
+             ctx.fillStyle = '#fff'; // Headlight
+             ctx.fillRect(w/2-2, -2, 2, 4);
         } else {
              this.roundRect(ctx, -w/4, -h/2 + 4, w/2, h - 8, 3);
              ctx.fill();
@@ -189,6 +218,9 @@ export default class Prop extends Entity {
         const shiftY = -height3D / 2;
 
         // Base Shadow
+        // Physics collision uses (x,y) as center.
+        // We draw base centered at 0,0.
+        // Shadow slightly offset.
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
         ctx.fillRect(-w/2 + 10, -h/2 + 10, w, h);
 
@@ -215,6 +247,16 @@ export default class Prop extends Entity {
         ctx.globalAlpha = 0.2;
         ctx.fillRect(-w/2 + shiftX + 10, -h/2 + shiftY + 10, w - 20, h - 20);
         ctx.globalAlpha = 1.0;
+
+        // Shop Details?
+        if (this.propType === 'small_shop') {
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.8;
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SHOP', shiftX, shiftY + 10);
+            ctx.globalAlpha = 1.0;
+        }
     }
 
     roundRect(ctx, x, y, w, h, r) {
