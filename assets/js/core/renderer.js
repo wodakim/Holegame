@@ -1,7 +1,7 @@
 export default class Renderer {
     constructor(canvas, assetManager) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        this.ctx = canvas.getContext('2d', { alpha: false }); // Optimize
         this.assetManager = assetManager;
         this.width = canvas.width;
         this.height = canvas.height;
@@ -9,8 +9,9 @@ export default class Renderer {
         // Configuration
         this.gridSize = 100;
         this.roadWidth = 60; // Road width
-        this.sidewalkColor = '#3a3a3a'; // Dark Grey for blocks
-        this.roadColor = '#222'; // Darker for roads
+        this.sidewalkColor = '#2C3E50'; // Darker Blue-Grey (Triple A)
+        this.roadColor = '#1a1a1a'; // Almost Black
+        this.grassColor = '#27ae60'; // Vibrant Green details
     }
 
     resize(width, height) {
@@ -21,6 +22,8 @@ export default class Renderer {
     }
 
     clear() {
+        // Use fillRect instead of clearRect for potentially better performance on some mobile GPUs
+        // if we are redrawing everything anyway. But clearRect is standard.
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
 
@@ -106,24 +109,19 @@ export default class Renderer {
         this.ctx.fillStyle = this.sidewalkColor;
         this.ctx.fillRect(startX - 100, startY - 100, viewportWidth + 200, viewportHeight + 200);
 
-        // 1.5 Draw Grass Corners (Aesthetics)
-        this.ctx.fillStyle = '#2d4a3e'; // Muted Green
+        // 1.5 Draw Decorative Elements (Grass Corners / Drains)
+        this.ctx.fillStyle = '#34495e'; // Slightly lighter pavement
         for (let x = gridStartX; x <= endX; x += this.gridSize) {
             for (let y = gridStartY; y <= endY; y += this.gridSize) {
                 // Determine block center
-                const cx = x + this.gridSize / 2;
-                const cy = y + this.gridSize / 2;
-                // Draw a small green patch in random corners based on coordinate hash
-                if ((x + y) % 3 === 0) {
-                    this.ctx.fillRect(x + 5, y + 5, 20, 20);
-                } else if ((x + y) % 5 === 0) {
-                     this.ctx.fillRect(x + this.gridSize - 25, y + this.gridSize - 25, 20, 20);
-                }
+                // Draw pavement tiles
+                this.ctx.fillRect(x + 5, y + 5, this.gridSize - 10, this.gridSize - 10);
             }
         }
 
         // 2. Draw Roads (Grid Lines)
         this.ctx.lineWidth = this.roadWidth;
+        this.ctx.lineCap = 'butt';
         this.ctx.strokeStyle = this.roadColor;
         this.ctx.beginPath();
 
@@ -139,8 +137,8 @@ export default class Renderer {
 
         // 3. Draw Road Markings (Dashed White Lines) - Reduced opacity
         this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        this.ctx.setLineDash([10, 10]);
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.setLineDash([15, 15]);
         this.ctx.beginPath();
 
         for (let x = gridStartX; x <= endX; x += this.gridSize) {
@@ -158,73 +156,56 @@ export default class Renderer {
     updateParallax(camera) {
         const bg = document.getElementById('abyss-background');
         if (bg) {
-            const offsetX = -camera.x * 0.1;
-            const offsetY = -camera.y * 0.1;
+            const offsetX = -camera.x * 0.05;
+            const offsetY = -camera.y * 0.05;
             bg.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
         }
     }
 
     drawHole(entity) {
         this.ctx.beginPath();
-        // Use default shape drawing for the "cut", as textures don't work with destination-out easily
-        // unless we draw the mask. But circle/square is fine for the hole itself.
         this.drawShape(entity.x, entity.y, entity.radius, entity.shape);
         this.ctx.fill();
     }
 
     drawHoleRim(entity) {
-        // If we have a skin asset, try to use it?
-        // But skins are usually just the rim.
-        // Let's stick to the procedural neon rim for now as it looks cool and "Void"-like
-        // OR if we have a skin asset, draw it on top.
-
-        const skinKey = entity.skinId || 'skin-default'; // Assuming entity has skinId
-        const skinImg = this.assetManager ? this.assetManager.getImage(skinKey) : null;
-
-        if (skinImg) {
-            this.ctx.save();
-            this.ctx.translate(entity.x, entity.y);
-            this.ctx.rotate(Date.now() * 0.002); // Spin
-            const size = entity.radius * 2.5; // Slightly larger than hole
-            this.ctx.drawImage(skinImg, -size/2, -size/2, size, size);
-            this.ctx.restore();
-
-            // Name
-            this.drawName(entity);
-            return;
-        }
-
         // Fallback to Procedural Rim
-        const depthGrad = this.ctx.createRadialGradient(entity.x, entity.y, entity.radius * 0.7, entity.x, entity.y, entity.radius);
+        const depthGrad = this.ctx.createRadialGradient(entity.x, entity.y, entity.radius * 0.8, entity.x, entity.y, entity.radius);
         depthGrad.addColorStop(0, 'rgba(0,0,0,0)');
         depthGrad.addColorStop(1, 'rgba(0,0,0,0.8)');
         this.ctx.fillStyle = depthGrad;
         this.ctx.beginPath();
-        this.ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
+        this.drawShape(entity.x, entity.y, entity.radius, entity.shape);
         this.ctx.fill();
 
-        // Rings
-        const time = Date.now() * 0.001;
+        // Neon Glow Rim
         this.ctx.save();
         this.ctx.translate(entity.x, entity.y);
-        this.ctx.rotate(time);
+        this.ctx.rotate(Date.now() * 0.001); // Subtle spin
+
         this.ctx.beginPath();
         this.drawShape(0, 0, entity.radius, entity.shape, 0, 0);
         this.ctx.strokeStyle = entity.color || '#00f3ff';
         this.ctx.lineWidth = 5;
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = entity.color || '#00f3ff';
         this.ctx.stroke();
         this.ctx.restore();
 
+        // Arrow Pointer to Player (if offscreen? No, this is HUD stuff)
+        // Just Name
         this.drawName(entity);
     }
 
     drawName(entity) {
         if (entity.name) {
             this.ctx.fillStyle = '#fff';
-            this.ctx.font = 'bold 16px Montserrat';
+            this.ctx.font = 'bold 16px Montserrat, sans-serif';
             this.ctx.textAlign = 'center';
             this.ctx.shadowBlur = 4;
             this.ctx.shadowColor = '#000';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText(entity.name, entity.x, entity.y - entity.radius - 20);
             this.ctx.fillText(entity.name, entity.x, entity.y - entity.radius - 20);
             this.ctx.shadowBlur = 0;
         }
@@ -235,19 +216,24 @@ export default class Renderer {
         let key = null;
         if (entity.type === 'prop') {
             const pType = entity.propType;
-            if (pType === 'hydrant') key = 'prop-hydrant';
-            else if (pType === 'cone') key = 'prop-cone';
-            else if (pType === 'mailbox') key = 'prop-mailbox';
-            else if (pType === 'trash_bin') key = 'prop-trash';
-            else if (pType === 'kiosk' || pType === 'small_shop') key = 'prop-vending'; // Mapping
-            else if (pType === 'car') key = 'prop-car';
-            else if (pType === 'van' || pType === 'bus' || pType === 'truck') key = 'prop-van'; // Shared for now
-            else if (pType === 'tree') key = 'prop-tree';
-            else if (pType === 'building') key = 'prop-building';
-            // Fallback for others (pole, fence, etc) will use procedural or default
+            // Mapping from Prop types to AssetManager keys
+            if (pType === 'hydrant') key = 'hydrant';
+            else if (pType === 'cone') key = 'cone';
+            else if (pType === 'mailbox') key = 'mailbox';
+            else if (pType === 'trash_bin' || pType === 'bin') key = 'trash';
+            else if (pType === 'kiosk' || pType === 'vending') key = 'vending';
+            else if (pType === 'car' || pType === 'motorcycle') key = 'car';
+            else if (pType === 'van' || pType === 'bus' || pType === 'truck') key = 'van';
+            else if (pType === 'tree') key = 'tree';
+            else if (pType === 'building' || pType === 'small_shop' || pType === 'shelter') key = 'building';
+            else if (pType === 'police') key = 'police';
+            else if (pType === 'human') key = 'human';
+        } else if (entity.type === 'powerup') {
+            // No asset for powerup yet, use procedural or maybe a generic icon
+            // key = 'coin'; // placeholder
         }
 
-        const img = this.assetManager ? this.assetManager.getImage(key) : null;
+        const img = this.assetManager ? this.assetManager.get(key) : null;
 
         if (img) {
             // Draw Sprite
@@ -261,27 +247,24 @@ export default class Renderer {
 
             // Rotation
             if (entity.rotation) this.ctx.rotate(entity.rotation);
-            else if (entity.propType === 'car' || entity.propType === 'van') {
-                // If vehicles don't have rotation property set, maybe align?
-                // Usually Prop.js sets rotation.
-            }
 
             // Scale
             const scale = entity.scale || 1;
             this.ctx.scale(scale, scale);
 
             // Draw Image
-            // Calculate dimensions based on entity size or image aspect ratio
+            // Calculate dimensions based on entity size
             // Prop.js sets width/length.
             let w = entity.width || entity.radius * 2;
             let h = entity.length || entity.height || entity.radius * 2;
 
-            // Adjust for specific sprites that might be taller (buildings)
-            if (key === 'prop-building') {
-                // Building sprite is isometric, we draw it anchored at the bottom-center (roughly)
-                // Sprite viewbox is 100x100.
-                h = w * 1.5; // Make it tall
-                this.ctx.drawImage(img, -w/2, -h + w/4, w, h); // Offset y to anchor at bottom
+            // Special handling for Buildings (Isometric height)
+            if (key === 'building') {
+                h = w * 1.5;
+                this.ctx.drawImage(img, -w/2, -h + w/3, w, h); // Anchor bottom
+            } else if (key === 'tree') {
+                h = w * 1.5;
+                this.ctx.drawImage(img, -w/2, -h + w/4, w, h);
             } else {
                 this.ctx.drawImage(img, -w/2, -h/2, w, h);
             }
@@ -289,7 +272,7 @@ export default class Renderer {
             this.ctx.restore();
 
         } else {
-            // Fallback to original procedural drawing
+            // Fallback to original procedural drawing if no asset
             if (entity.draw) entity.draw(this.ctx);
         }
     }
@@ -298,6 +281,30 @@ export default class Renderer {
         if (type === 'square') {
             const side = r * Math.sqrt(2);
             this.ctx.rect(cx - side/2, cy - side/2, side, side);
+        } else if (type === 'star') {
+            // Simple Star
+            const spikes = 5;
+            const outerRadius = r;
+            const innerRadius = r / 2;
+            let rot = Math.PI / 2 * 3;
+            let cx2 = cx;
+            let cy2 = cy;
+            let step = Math.PI / spikes;
+
+            this.ctx.moveTo(cx2, cy2 - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                cx2 = cx + Math.cos(rot) * outerRadius;
+                cy2 = cy + Math.sin(rot) * outerRadius;
+                this.ctx.lineTo(cx2, cy2);
+                rot += step;
+
+                cx2 = cx + Math.cos(rot) * innerRadius;
+                cy2 = cy + Math.sin(rot) * innerRadius;
+                this.ctx.lineTo(cx2, cy2);
+                rot += step;
+            }
+            this.ctx.lineTo(cx, cy - outerRadius);
+            this.ctx.closePath();
         } else {
             this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
         }

@@ -17,25 +17,25 @@ High contrast, saturated colors to pop on mobile screens.
 *   **Success/Growth:** `#39FF14` (Neon Green)
 
 ## 3. Typography
-**Headings:** `Fredoka One` or `Baloo 2` (Rounded, bold, friendly).
-**Body Text:** `Montserrat` or `Nunito` (Readable, rounded sans-serif).
+**Headings:** `Montserrat` (Bold/Black).
+**Body Text:** `Montserrat` (Regular).
 
 ## 4. Assets (SVG List)
-All assets will be generated as SVG strings/files to ensure crisp rendering at any scale.
+All assets are generated as SVG strings/files to ensure crisp rendering at any scale.
 
 ### Props (Satirical City)
 1.  **Hydrant:** Red, classic shape, but with two "eyes" (bolts) looking worried.
-2.  **Cone:** Orange/White striped, slightly bent/melted looking.
-3.  **Mailbox:** Blue, boxy, overflowing with letters (one stuck in the slot like a tongue).
+2.  **Cone:** Orange/White striped, slightly bent/melted looking with glitch effect.
+3.  **Mailbox:** Blue, boxy, overflowing with letters.
 4.  **Trash Bin:** Green metal can, lid slightly open, fish bone sticking out.
-5.  **Vending Machine:** Retro style, colorful bottles visible, "Sold Out" sign.
+5.  **Vending Machine:** Retro style, colorful bottles visible, dispenser slot.
 6.  **Car:** Round, beetle-like shape, exaggerated wheels, no sharp angles.
 7.  **Bus/Van:** Rectangular but with rounded corners, "School Bus" yellow or "Hippie Van" flowers.
 8.  **Tree:** Simple geometric foliage (spheres/clouds), brown trunk.
-9.  **Building:** Isometric block, colorful windows, maybe a face on the facade?
+9.  **Building:** Isometric block (2.5D), colorful windows.
 
 ### Skins (Player)
-1.  **Default:** Black Hole with a spinning neon rim.
+1.  **Default:** Black Hole with a procedural neon rim.
 2.  **UFO:** Flying saucer shape, beam underneath (the "hole").
 3.  **Glitch:** Pixelated edges, shifting colors.
 4.  **Donut:** Pink frosting, sprinkles.
@@ -47,23 +47,19 @@ All assets will be generated as SVG strings/files to ensure crisp rendering at a
 4.  **Pause/Play:** Rounded buttons.
 
 ## 5. Audio (SFX)
-**Style:** Cartoon/Slapstick.
-*   **Eat Small:** "Pop!", "Bloop!"
-*   **Eat Large:** "Crunch!", "Gulp!"
-*   **Level Up:** "Ta-da!", Fanfare.
-*   **Die:** "Womp womp", Vinyl scratch.
-*   **Music:** Upbeat, funky, looping bassline (Synth-based).
+**Style:** Cartoon/Slapstick + Retro Arcade.
+*   **Eat Small:** "Pop!", "Bloop!" (Sine wave pitch bend).
+*   **Eat Large:** "Crunch!" (Noise burst + Sawtooth thud).
+*   **Level Up:** "Fanfare!" (Major Arpeggio).
+*   **Die:** "Power Down" (Sawtooth pitch drop).
+*   **Ambient:** "City Hum" (Low frequency drone + LFO).
+*   **UI Click:** "Blip" (Short Triangle wave).
 
 ## 6. Technical Constraints
-*   **Format:** SVG for graphics, WebAudio for sound (procedural or base64 samples).
+*   **Format:** SVG for graphics (Base64 in AssetManager), WebAudio for sound (procedural).
 *   **Performance:**
-    *   Preload all SVGs as `Image` objects at startup.
+    *   Preload all SVGs as `Image` objects at startup (`AssetManager.loadAll`).
     *   Draw using `ctx.drawImage` in the loop.
     *   Use offscreen canvases for complex static shapes if needed.
-*   **Responsiveness:** UI must scale perfectly from iPhone SE to iPad Pro. Touch targets > 44px.
-
-## 7. Implementation Plan
-1.  **AssetManager:** Load SVGs.
-2.  **Renderer:** Draw SVGs.
-3.  **UI:** Apply CSS/HTML overhaul.
-4.  **Polish:** Animations and "Juice".
+*   **Responsiveness:** UI scales perfectly from iPhone SE to iPad Pro. Touch targets > 44px.
+*   **Mobile:** Dynamic Joystick logic, viewport meta tags, haptic feedback disabled (as per user request).
