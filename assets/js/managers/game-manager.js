@@ -10,6 +10,7 @@ import Camera from '../core/camera.js';
 import TrafficManager from './traffic-manager.js';
 import MissionManager from './mission-manager.js';
 import MapManager from './map-manager.js';
+import UpgradeManager from './upgrade-manager.js';
 
 export default class GameManager {
     constructor(app) {
@@ -18,17 +19,18 @@ export default class GameManager {
         this.camera = new Camera();
         this.trafficManager = new TrafficManager(this); // Pass self
 
-        this.entities = []; // Initialize entities before MapManager (which uses it)
+        this.entities = [];
 
         this.mapManager = new MapManager(this); // Pass self
         this.missionManager = new MissionManager(app.saveManager);
+        this.upgradeManager = new UpgradeManager(this); // New
 
         this.player = null;
 
         this.state = 'MENU';
         this.score = 0;
         this.kills = 0;
-        this.gameTime = 120; // Default
+        this.gameTime = 120;
 
         this.botCount = 10;
         this.policeCount = 0;
@@ -39,33 +41,39 @@ export default class GameManager {
         this.lastKillTime = 0;
         this.slowMoTimer = 0;
         this.paused = false;
+
+        this.startCountdown = 0; // New
     }
 
     startGame(duration = 120) {
         this.paused = false;
         this.app.soundManager.init();
-        this.state = 'PLAYING';
+        this.state = 'COUNTDOWN'; // Start in countdown
+        this.startCountdown = 3; // 3 seconds
+
         this.score = 0;
         this.kills = 0;
         this.gameTime = duration;
         this.entities = [];
+        this.upgradeManager = new UpgradeManager(this); // Reset upgrades
 
         // UI Transition
         this.app.saveManager.updateUI();
         this.app.uiManager.switchScreen('hud');
+        this.app.uiManager.showCountdown(this.startCountdown);
 
-        // Create Player
+        // Create Player (Small start)
         const skinInfo = this.app.saveManager.getCurrentSkinInfo();
-        this.player = new Player(0, 0, 40, skinInfo.color, 'You', this.app.saveManager);
+        this.player = new Player(0, 0, 25, skinInfo.color, 'You', this.app.saveManager); // Radius 25
         this.player.shape = skinInfo.shape || 'circle';
         this.entities.push(this.player);
 
         // Reset Managers
         this.mapManager.activeChunks.clear();
-        this.mapManager.update(0, 0); // Initial Generation around 0,0
-        this.trafficManager.cars = []; // Clear old cars
+        this.mapManager.update(0, 0);
+        this.trafficManager.cars = [];
 
-        // Create Bots
+        // Create Bots (Small start)
         for (let i = 0; i < this.botCount; i++) {
             this.spawnBot();
         }
@@ -77,6 +85,23 @@ export default class GameManager {
     }
 
     update(dt) {
+        // Handle Countdown State
+        if (this.state === 'COUNTDOWN') {
+            this.startCountdown -= dt;
+            if (this.startCountdown <= 0) {
+                this.state = 'PLAYING';
+                this.app.uiManager.hideCountdown();
+            } else {
+                this.app.uiManager.updateCountdown(Math.ceil(this.startCountdown));
+            }
+            // Still render entities but don't update logic fully?
+            // Actually, let's allow rendering but block movement.
+            // MapManager update needed for initial render? Yes.
+            this.mapManager.update(this.player.x, this.player.y);
+            this.camera.follow(this.player, dt);
+            return;
+        }
+
         if (this.state !== 'PLAYING') return;
         if (this.paused) return;
 
@@ -100,6 +125,9 @@ export default class GameManager {
         this.mapManager.update(this.player.x, this.player.y);
         this.trafficManager.update(dt);
 
+        // Check Level Up (New)
+        this.upgradeManager.checkLevelUp(this.score);
+
         // 3. Physics Update
         this.physics.update(dt, this.entities, (eater, eaten) => {
             // Sound & Feedback
@@ -115,6 +143,13 @@ export default class GameManager {
                     const value = eaten.value || 1;
                     this.spawnFloatingText(eaten.x, eaten.y, `+${value}`, '#39ff14');
                     if (eaten.propType === 'car') this.missionManager.onEvent('eat_car');
+
+                    // Trigger level up check on score gain
+                    this.score += 0; // Already added in physics via grow(), but we track it here for UI?
+                    // Physics calls hole.grow(). Player.score updates inside grow().
+                    // We check this.player.score in updateHUD.
+                    // Check level up here:
+                    this.upgradeManager.checkLevelUp(this.player.score);
                 }
                 else if (eaten.type === 'hole') {
                     this.app.soundManager.play('eatLarge');
@@ -148,7 +183,7 @@ export default class GameManager {
                     const input = this.app.inputHandler.getVector();
                     entity.update(dt, input);
                     this.camera.follow(this.player, dt);
-                    const targetZoom = Math.max(0.4, 1 - (this.player.radius - 40) / 1000); // Smoother zoom
+                    const targetZoom = Math.max(0.4, 1 - (this.player.radius - 25) / 1000); // Smoother zoom from 25
                     this.camera.setTargetZoom(targetZoom);
                 }
             } else if (entity.type === 'hole') {
@@ -161,7 +196,6 @@ export default class GameManager {
         });
 
         // 5. Cleanup & Spawning
-        // Mark distant bots for deletion
         if (this.player) {
             this.entities.forEach(e => {
                 if (e.type === 'hole' && e !== this.player) {
@@ -174,18 +208,15 @@ export default class GameManager {
 
         this.entities = this.entities.filter(e => !e.markedForDeletion);
 
-        // Respawn Bots (Near player)
         const currentBots = this.entities.filter(e => e.type === 'hole' && e !== this.player).length;
         if (currentBots < this.botCount) {
              this.spawnBot();
         }
 
-        // Spawn Powerups (Rare Speed)
-        if (Math.random() < 0.002) { // Very rare
+        if (Math.random() < 0.002) {
             this.spawnPowerUp();
         }
 
-        // Check if player died
         if (this.player && this.player.markedForDeletion) {
             this.gameOver();
         }
@@ -204,7 +235,7 @@ export default class GameManager {
              this.policeSpawnTimer += dt;
              const currentPolice = this.entities.filter(e => e.isPolice).length;
 
-             if (currentPolice < this.maxPolice && this.policeSpawnTimer > 15) { // Every 15s
+             if (currentPolice < this.maxPolice && this.policeSpawnTimer > 15) {
                  this.spawnPolice();
                  this.policeSpawnTimer = 0;
              }
@@ -231,11 +262,10 @@ export default class GameManager {
         let attempts = 0;
         do {
             const angle = Math.random() * Math.PI * 2;
-            const d = 800 + Math.random() * 1200; // 800-2000 away
+            const d = 800 + Math.random() * 1200;
             x = this.player.x + Math.cos(angle) * d;
             y = this.player.y + Math.sin(angle) * d;
 
-            // Check if too close (redundant given math above, but good practice)
             const dx = x - this.player.x;
             const dy = y - this.player.y;
             dist = Math.sqrt(dx*dx + dy*dy);
@@ -247,8 +277,8 @@ export default class GameManager {
         const colors = ['#ff00ff', '#39ff14', '#ffae00', '#00f3ff', '#ff3333'];
         const color = colors[Math.floor(Math.random() * colors.length)];
 
-        // Bot grows slightly with time? Or static? Static start is fair.
-        const bot = new Bot(x, y, 40 + Math.random() * 20, color, name);
+        // Start same size as player: 25 + small random variance
+        const bot = new Bot(x, y, 25 + Math.random() * 5, color, name);
         this.entities.push(bot);
     }
 
@@ -324,7 +354,7 @@ export default class GameManager {
     revivePlayer() {
         this.app.adManager.showRewardedAd(() => {
              this.player.markedForDeletion = false;
-             this.player.radius = 40;
+             this.player.radius = 25; // Reset to 25
              // Respawn safely
              this.player.x += 1000;
              this.entities.push(this.player);
