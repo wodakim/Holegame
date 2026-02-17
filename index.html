@@ -44,16 +44,8 @@
                 ⚠️ WARNING: POLICE CARS CARRY "VOID CURE". DO NOT EAT! ⚠️
             </div>
 
-            <div class="game-setup">
-                <div class="time-selection">
-                    <h3>SELECT TIME</h3>
-                    <div class="time-buttons">
-                        <button class="btn-time" data-time="120">2 MIN</button>
-                        <button class="btn-time" data-time="300">5 MIN</button>
-                        <button class="btn-time" data-time="600">10 MIN</button>
-                    </div>
-                </div>
-            </div>
+            <!-- Main Play Button -->
+            <button id="btn-play-menu" class="btn-primary pulse">PLAY</button>
 
             <div class="bottom-controls">
                 <button id="btn-no-ads" class="btn-secondary">NO ADS</button>
@@ -111,6 +103,25 @@
             <div class="loader"></div>
             <h2 class="blink">SEARCHING FOR PLAYERS...</h2>
             <p style="color: #888; margin-top: 10px;">ESTIMATED WAIT: <span id="wait-time" style="color: #fff; font-weight: bold;">3</span>s</p>
+        </div>
+
+        <!-- Popup: Time Selection -->
+        <div id="popup-time-select" class="popup hidden">
+            <div class="popup-content">
+                <h2>SELECT DURATION</h2>
+                <div class="time-grid">
+                    <button class="btn-time" data-time="120">
+                        <span class="time-big">2</span> MIN
+                    </button>
+                    <button class="btn-time" data-time="300">
+                        <span class="time-big">5</span> MIN
+                    </button>
+                    <button class="btn-time" data-time="600">
+                        <span class="time-big">10</span> MIN
+                    </button>
+                </div>
+                <button id="btn-close-popup" class="btn-secondary">CANCEL</button>
+            </div>
         </div>
 
         <!-- Level Up Screen -->

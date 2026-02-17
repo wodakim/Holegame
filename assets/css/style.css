@@ -544,3 +544,99 @@ button {
 #countdown-overlay {
     transition: transform 0.2s;
 }
+
+/* Popup Styles */
+.popup {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    transition: opacity 0.3s ease;
+}
+
+.popup-content {
+    background: rgba(20, 20, 30, 0.95);
+    border: 2px solid var(--color-primary);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 0 30px var(--color-primary);
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.popup:not(.hidden) .popup-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.time-grid {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.time-big {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 900;
+}
+
+/* Updated Level Up Cards */
+.cards-container {
+    flex-direction: row; /* Horizontal */
+    flex-wrap: wrap;
+    gap: 30px;
+    perspective: 1000px; /* For 3D flip effects */
+}
+
+.upgrade-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* Entrance Animation */
+    opacity: 0;
+    transform: translateY(50px) rotateX(20deg);
+    animation: card-entrance 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes card-entrance {
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg);
+    }
+}
+
+.upgrade-card:hover {
+    transform: translateY(-15px) scale(1.05);
+    border-color: var(--color-tertiary);
+    box-shadow: 0 0 20px var(--color-tertiary);
+}
+
+.upgrade-card h3 {
+    font-size: 1.4rem;
+    color: var(--color-tertiary);
+}
+
+/* Mobile Adjustments for Popups/Cards */
+@media (max-width: 600px) {
+    .time-grid {
+        flex-direction: column;
+    }
+    .cards-container {
+        flex-direction: column; /* Stack on mobile if needed, or wrap */
+        align-items: center;
+    }
+    .upgrade-card {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+        min-height: 200px;
+    }
+}

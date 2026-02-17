@@ -183,7 +183,19 @@ export default class GameManager {
                     const input = this.app.inputHandler.getVector();
                     entity.update(dt, input);
                     this.camera.follow(this.player, dt);
-                    const targetZoom = Math.max(0.4, 1 - (this.player.radius - 25) / 1000); // Smoother zoom from 25
+
+                    // Optimized Zoom for Mobile "Triple A" Feel
+                    const isMobile = window.innerWidth < 800;
+                    const baseZoom = isMobile ? 0.6 : 1.0;
+                    const minZoom = isMobile ? 0.25 : 0.35;
+
+                    // Logarithmic-ish curve: Zooms out faster initially to show surroundings
+                    // radius 25 -> zoom 0.6 (mobile)
+                    // radius 100 -> zoom ~0.5
+                    // radius 500 -> zoom ~0.25
+                    const zoomFactor = (this.player.radius - 25) * 0.0015;
+                    const targetZoom = Math.max(minZoom, baseZoom - zoomFactor);
+
                     this.camera.setTargetZoom(targetZoom);
                 }
             } else if (entity.type === 'hole') {
