@@ -10,7 +10,11 @@ export default class UIManager {
             gameOver: document.getElementById('screen-game-over'),
             pause: document.getElementById('screen-pause'),
             matchmaking: document.getElementById('screen-matchmaking'),
-            levelup: document.getElementById('screen-levelup') // New
+            levelup: document.getElementById('screen-levelup')
+        };
+
+        this.popups = {
+            timeSelect: document.getElementById('popup-time-select')
         };
 
         this.minimap = new Minimap(document.getElementById('minimap-canvas'), app);
@@ -18,14 +22,31 @@ export default class UIManager {
     }
 
     bindEvents() {
-        // Main Menu - Time Selection
+        // Main Menu - Play Button triggers Popup
+        const playBtn = document.getElementById('btn-play-menu');
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                this.showPopup('timeSelect');
+            });
+        }
+
+        // Time Selection inside Popup
         const timeButtons = document.querySelectorAll('.btn-time');
         timeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const time = parseInt(e.target.dataset.time);
+                // Handle click on span or button
+                const target = e.target.closest('.btn-time');
+                const time = parseInt(target.dataset.time);
+                this.hidePopup('timeSelect');
                 this.startMatchmaking(time);
             });
         });
+
+        // Close Popup
+        const closePopup = document.getElementById('btn-close-popup');
+        if (closePopup) {
+            closePopup.addEventListener('click', () => this.hidePopup('timeSelect'));
+        }
 
         document.getElementById('btn-shop').addEventListener('click', () => this.app.shopManager.openShop());
         document.getElementById('btn-no-ads').addEventListener('click', () => this.app.shopManager.buyNoAds());
@@ -66,6 +87,22 @@ export default class UIManager {
         }, 3000);
     }
 
+    showPopup(name) {
+        const p = this.popups[name];
+        if (p) {
+            p.classList.remove('hidden');
+            // Add animation class if needed
+            p.querySelector('.popup-content').classList.add('popup-enter');
+        }
+    }
+
+    hidePopup(name) {
+        const p = this.popups[name];
+        if (p) {
+            p.classList.add('hidden');
+        }
+    }
+
     showCountdown(num) {
         let el = document.getElementById('countdown-overlay');
         if (!el) {
@@ -104,12 +141,13 @@ export default class UIManager {
     showLevelUp(choices, onSelect) {
         this.switchScreen('levelup');
         const container = document.getElementById('upgrade-cards-container');
-        if (!container) return; // Should exist in HTML
-        container.innerHTML = ''; // Clear old
+        if (!container) return;
+        container.innerHTML = '';
 
-        choices.forEach(choice => {
+        choices.forEach((choice, index) => {
             const card = document.createElement('div');
             card.className = 'upgrade-card';
+            card.style.animationDelay = `${index * 0.1}s`; // Stagger animation
 
             const icon = document.createElement('div');
             icon.className = 'upgrade-icon';
