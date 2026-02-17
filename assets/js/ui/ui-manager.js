@@ -21,20 +21,29 @@ export default class UIManager {
         this.bindEvents();
     }
 
-    bindEvents() {
-        // Main Menu - Play Button triggers Popup
-        const playBtn = document.getElementById('btn-play-menu');
-        if (playBtn) {
-            playBtn.addEventListener('click', () => {
-                this.showPopup('timeSelect');
+    // Helper to bind buttons with sound
+    bindBtn(id, callback) {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                this.app.soundManager.play('uiClick');
+                // visual bounce handled by CSS :active
+                callback(e);
             });
         }
+    }
 
-        // Time Selection inside Popup
+    bindEvents() {
+        // Main Menu
+        this.bindBtn('btn-play-menu', () => this.showPopup('timeSelect'));
+        this.bindBtn('btn-shop', () => this.app.shopManager.openShop());
+        this.bindBtn('btn-no-ads', () => this.app.shopManager.buyNoAds());
+
+        // Popup: Time Selection
         const timeButtons = document.querySelectorAll('.btn-time');
         timeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                // Handle click on span or button
+                this.app.soundManager.play('uiClick');
                 const target = e.target.closest('.btn-time');
                 const time = parseInt(target.dataset.time);
                 this.hidePopup('timeSelect');
@@ -42,29 +51,20 @@ export default class UIManager {
             });
         });
 
-        // Close Popup
-        const closePopup = document.getElementById('btn-close-popup');
-        if (closePopup) {
-            closePopup.addEventListener('click', () => this.hidePopup('timeSelect'));
-        }
-
-        document.getElementById('btn-shop').addEventListener('click', () => this.app.shopManager.openShop());
-        document.getElementById('btn-no-ads').addEventListener('click', () => this.app.shopManager.buyNoAds());
+        this.bindBtn('btn-close-popup', () => this.hidePopup('timeSelect'));
 
         // Shop
-        document.getElementById('btn-back-shop').addEventListener('click', () => this.app.shopManager.closeShop());
+        this.bindBtn('btn-back-shop', () => this.app.shopManager.closeShop());
 
         // Game Over
-        document.getElementById('btn-revive').addEventListener('click', () => this.app.gameManager.revivePlayer());
-        document.getElementById('btn-replay').addEventListener('click', () => {
-             this.app.gameManager.startGame(this.lastDuration || 120);
-        });
-        document.getElementById('btn-menu-gameover').addEventListener('click', () => this.app.gameManager.quitGame());
+        this.bindBtn('btn-revive', () => this.app.gameManager.revivePlayer());
+        this.bindBtn('btn-replay', () => this.app.gameManager.startGame(this.lastDuration || 120));
+        this.bindBtn('btn-menu-gameover', () => this.app.gameManager.quitGame());
 
-        // Pause
-        document.getElementById('btn-pause').addEventListener('click', () => this.app.gameManager.pauseGame());
-        document.getElementById('btn-resume').addEventListener('click', () => this.app.gameManager.resumeGame());
-        document.getElementById('btn-quit').addEventListener('click', () => this.app.gameManager.quitGame());
+        // Pause / HUD
+        this.bindBtn('btn-pause', () => this.app.gameManager.pauseGame());
+        this.bindBtn('btn-resume', () => this.app.gameManager.resumeGame());
+        this.bindBtn('btn-quit', () => this.app.gameManager.quitGame());
     }
 
     startMatchmaking(duration) {
@@ -91,9 +91,8 @@ export default class UIManager {
     showPopup(name) {
         const p = this.popups[name];
         if (p) {
+            this.app.soundManager.play('uiOpen');
             p.classList.remove('hidden');
-            // Add animation class if needed
-            p.querySelector('.popup-content').classList.add('popup-enter');
         }
     }
 
@@ -120,27 +119,37 @@ export default class UIManager {
             el.style.fontSize = '8rem';
             el.style.fontWeight = '900';
             el.style.color = '#fff';
-            el.style.textShadow = '0 0 20px #00f3ff';
+            // el.style.textShadow = '0 0 20px #00f3ff'; // Old neon
+            el.style.textShadow = '4px 4px 0 #2C3E50'; // New hard shadow
             el.style.zIndex = '100';
             el.style.pointerEvents = 'none';
             document.body.appendChild(el);
         }
         el.textContent = num;
         el.classList.remove('hidden');
+        // Play tick sound
+        this.app.soundManager.play('uiClick');
     }
 
     updateCountdown(num) {
         const el = document.getElementById('countdown-overlay');
-        if (el) el.textContent = num;
+        if (el) {
+             if (el.textContent != num) this.app.soundManager.play('uiClick');
+             el.textContent = num;
+        }
     }
 
     hideCountdown() {
         const el = document.getElementById('countdown-overlay');
         if (el) el.classList.add('hidden');
+        // Play GO sound?
+        this.app.soundManager.play('levelUp');
     }
 
     showLevelUp(choices, onSelect) {
         this.switchScreen('levelup');
+        this.app.soundManager.play('levelUp'); // Positive sound
+
         const container = document.getElementById('upgrade-cards-container');
         if (!container) return;
         container.innerHTML = '';
@@ -148,7 +157,7 @@ export default class UIManager {
         choices.forEach((choice, index) => {
             const card = document.createElement('div');
             card.className = 'upgrade-card';
-            card.style.animationDelay = `${index * 0.1}s`; // Stagger animation
+            card.style.animationDelay = `${index * 0.1}s`;
 
             const icon = document.createElement('div');
             icon.className = 'upgrade-icon';
@@ -165,6 +174,7 @@ export default class UIManager {
             card.appendChild(desc);
 
             card.addEventListener('click', () => {
+                this.app.soundManager.play('uiClick');
                 onSelect(choice.id);
             });
 
@@ -184,6 +194,9 @@ export default class UIManager {
         if (screen) {
             screen.classList.remove('hidden');
             screen.classList.add('active');
+            if (screenName !== 'hud') {
+                this.app.soundManager.play('uiOpen');
+            }
         }
     }
 
@@ -203,8 +216,12 @@ export default class UIManager {
         sorted.forEach((h, index) => {
             const div = document.createElement('div');
             div.className = 'rank-item';
-            div.textContent = `${index + 1}. ${h.name} (${Math.floor(h.score || h.radius)})`;
-            if (h === player) div.style.color = '#ffae00';
+            // Added bold colors for rank
+            div.textContent = `${index + 1}. ${h.name}`;
+            if (h === player) {
+                div.style.color = '#E67E22'; // Orange for player
+                div.style.fontWeight = '900';
+            }
             leaderboard.appendChild(div);
         });
 
@@ -245,6 +262,8 @@ export default class UIManager {
 
     showGameOver(rank, coinsEarned) {
         this.switchScreen('gameOver');
+        this.app.soundManager.play('gameOver'); // Sad sound
+
         document.getElementById('final-rank').textContent = `RANK #${rank}`;
         document.getElementById('earned-coins').textContent = coinsEarned;
 
@@ -264,10 +283,10 @@ export default class UIManager {
             notif.style.top = '15%';
             notif.style.left = '50%';
             notif.style.transform = 'translate(-50%, -50%)';
-            notif.style.fontSize = '24px';
-            notif.style.fontWeight = 'bold';
+            notif.style.fontSize = '2rem';
+            notif.style.fontWeight = '900';
             notif.style.fontFamily = 'Montserrat, sans-serif';
-            notif.style.textShadow = '0 0 10px #000';
+            notif.style.textShadow = '3px 3px 0 #000';
             notif.style.zIndex = '1000';
             notif.style.pointerEvents = 'none';
             notif.style.transition = 'opacity 0.5s';
@@ -275,8 +294,11 @@ export default class UIManager {
         }
 
         notif.textContent = text;
-        notif.style.color = color || '#fff';
+        notif.style.color = color || '#F1C40F';
         notif.style.opacity = '1';
+
+        // Pop sound
+        this.app.soundManager.play('uiOpen');
 
         setTimeout(() => {
             notif.style.opacity = '0';

@@ -1,261 +1,236 @@
 import Entity from './entity.js';
 
 export default class Prop extends Entity {
-    // Static configuration for Prop Types
+    // Static configuration for Prop Types (Updated for Geek/Fun DA)
     static TYPES = {
-        // Tier 1: Trash / Small Objects (Eatable by 15-20)
-        'bottle': { radius: 5, value: 1, color: '#33ff33', isSolid: false, height: 10 },
-        'cone':   { radius: 8, value: 2, color: '#ffae00', isSolid: false, height: 15 },
-        'mailbox':{ radius: 10, value: 5, color: '#0055ff', isSolid: true, height: 15 },
+        // Tier 1: Small Trash
+        'bottle':   { radius: 6, value: 1, color: '#2ECC71', height: 10 }, // Green Soda
+        'cone':     { radius: 8, value: 2, color: '#E67E22', height: 15 }, // Orange Cone
+        'rubik':    { radius: 10, value: 5, color: 'multi', height: 12 },   // Cube (replaces mailbox)
 
-        // Tier 2: Street Furniture (Eatable by 20-30)
-        'pole':   { radius: 12, value: 10, color: '#888888', isSolid: true, height: 60 }, // Buffed
-        'fence':  { radius: 15, value: 15, color: '#aaaaaa', isSolid: true, height: 20 }, // Buffed
-        'trash_bin': { radius: 18, value: 20, color: '#225522', isSolid: true, height: 20 }, // Buffed
+        // Tier 2: Street Gear
+        'pole':     { radius: 10, value: 10, color: '#95A5A6', height: 60 },
+        'fence':    { radius: 12, value: 15, color: '#ECF0F1', height: 20 },
+        'trash_bin':{ radius: 16, value: 20, color: '#27AE60', height: 25 },
 
-        // Tier 3: Living Beings (Eatable by 30-40)
-        'human':  { radius: 18, value: 25, color: '#ffccaa', isSolid: false, height: 35 }, // Buffed
-        'bench':  { radius: 20, value: 30, color: '#8B4513', isSolid: true, height: 15 }, // Buffed
-        'motorcycle': { radius: 28, value: 50, color: '#ff0000', isSolid: false, height: 20 }, // Buffed
+        // Tier 3: Living / Active
+        'human':    { radius: 14, value: 25, color: '#F1C40F', height: 35 },
+        'bench':    { radius: 18, value: 30, color: '#D35400', height: 15 }, // Wooden
+        'scooter':  { radius: 25, value: 50, color: '#3498DB', height: 20 }, // Electric Scooter (replaces motorcycle)
 
-        // Tier 3.5: Small Structures / Kiosks (Eatable by 40-50)
-        'kiosk':  { radius: 35, value: 80, color: '#ff0055', isSolid: true, height: 40 }, // Buffed
+        // Tier 3.5: Structures
+        'kiosk':    { radius: 32, value: 80, color: '#E74C3C', height: 40 }, // Red Phone Booth / Arcade
 
-        // Tier 4: Vehicles (Eatable by 50-70)
-        'car':    { radius: 45, value: 100, color: 'random', isSolid: false, height: 25 }, // Buffed
-        'van':    { radius: 55, value: 150, color: '#ffffff', isSolid: false, height: 35 },
+        // Tier 4: Vehicles
+        'car':      { radius: 42, value: 100, color: 'random', height: 25 },
+        'van':      { radius: 52, value: 150, color: '#BDC3C7', height: 35 },
 
-        // Tier 5: Large Vehicles (Eatable by 70-100)
-        'bus':    { radius: 60, value: 200, color: '#ffae00', isSolid: false, height: 50 },
-        'truck':  { radius: 70, value: 250, color: '#ffffff', isSolid: false, height: 60 },
+        // Tier 5: Large
+        'bus':      { radius: 58, value: 200, color: '#F1C40F', height: 50 },
+        'truck':    { radius: 68, value: 250, color: '#FFFFFF', height: 60 },
 
-        'shelter':{ radius: 80, value: 400, color: '#444444', isSolid: true, height: 50 }, // Buffed
+        'shelter':  { radius: 75, value: 400, color: '#34495E', height: 45 },
 
-        // Tier 5.5: Medium Structures
-        'small_shop': { radius: 120, value: 800, color: '#00aaaa', isSolid: true, height: 80 }, // Buffed
-
-        // Tier 6: Buildings (Eatable by 250+)
-        'building': { radius: 200, value: 2500, color: 'random', isSolid: true, height: 300 } // Huge Buff
+        // Tier 6: Buildings
+        'small_shop': { radius: 110, value: 800, color: '#8E44AD', height: 80 }, // Comic Shop
+        'building':   { radius: 190, value: 2500, color: 'random', height: 250 }
     };
 
     constructor(x, y, type) {
         const config = Prop.TYPES[type] || Prop.TYPES['bottle'];
-        const radius = config.radius;
-        let color = config.color;
+        super(x, y, config.radius, config.color);
 
-        if (color === 'random') {
-            if (type === 'car') {
-                const colors = ['#ff0055', '#0055ff', '#00ffaa', '#aa00ff', '#ffffff'];
-                color = colors[Math.floor(Math.random() * colors.length)];
-            } else if (type === 'building') {
-                const bColors = ['#00ffff', '#ff00ff', '#39ff14', '#ffffff'];
-                color = bColors[Math.floor(Math.random() * bColors.length)];
-            }
-        }
-
-        super(x, y, radius, color);
-
-        this.type = 'prop';
         this.propType = type;
         this.value = config.value;
         this.height = config.height;
-        this.isSolid = config.isSolid;
+        this.isSolid = true; // Most props are solid now for interaction
 
-        // Derived dimensions for drawing
-        this.width = radius * 2;
-        if (['car', 'bus', 'truck', 'van', 'motorcycle'].includes(type)) {
-            this.length = radius * 2.5;
-            this.width = radius * 1.2;
-            if (type === 'motorcycle') {
-                this.length = radius * 2;
-                this.width = radius * 0.8;
-            }
-        } else if (['building', 'kiosk', 'small_shop'].includes(type)) {
-            this.width = radius * 2;
-            this.length = radius * 2;
+        // Random Colors for generic types
+        if (this.color === 'random') {
+            const palette = ['#E74C3C', '#3498DB', '#F1C40F', '#9B59B6', '#1ABC9C'];
+            this.color = palette[Math.floor(Math.random() * palette.length)];
         }
 
-        this.scale = 1;
-        this.rotation = (['building', 'shelter', 'kiosk', 'small_shop'].includes(type)) ? 0 : Math.random() * Math.PI * 2;
+        // Dimensions
+        this.width = this.radius * 2;
+        this.length = this.radius * 2;
 
-        this.shake = { x: 0, y: 0 };
+        if (['car', 'bus', 'truck', 'van', 'scooter'].includes(type)) {
+            this.length = this.radius * 2.2;
+            this.width = this.radius * 1.1;
+        }
+
+        this.rotation = Math.random() * Math.PI * 2;
+        if (['building', 'kiosk', 'small_shop', 'shelter'].includes(type)) {
+            this.rotation = 0; // Buildings align to grid
+        }
+
+        // Pre-calculate Rubik colors to avoid strobing
+        if (this.propType === 'rubik') {
+            this.rubikColors = [];
+            const palette = ['#E74C3C', '#3498DB', '#F1C40F', '#2ECC71'];
+            for(let i=0; i<4; i++) {
+                this.rubikColors.push(palette[Math.floor(Math.random() * 4)]);
+            }
+        }
     }
 
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x + this.shake.x, this.y + this.shake.y);
         ctx.rotate(this.rotation);
-        ctx.scale(this.scale, this.scale);
 
-        if (this.propType === 'bottle') {
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 3, 3, 0, 0, Math.PI*2);
-            ctx.fill();
+        // Shadow (Universal)
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        if (['building', 'small_shop'].includes(this.propType)) {
+             ctx.fillRect(-this.width/2 + 10, -this.length/2 + 10, this.width, this.length);
+        } else {
+             ctx.arc(5, 5, this.radius, 0, Math.PI*2);
+             ctx.fill();
+        }
 
-            ctx.fillStyle = this.color;
-            ctx.fillRect(-2, -8, 4, 8);
-            ctx.fillStyle = '#fff';
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(-1, -6, 1, 4);
-            ctx.globalAlpha = 1;
-        }
-        else if (this.propType === 'mailbox') {
-            ctx.fillStyle = '#0033cc';
-            ctx.fillRect(-5, -5, 10, 10); // Base
-            ctx.fillStyle = this.color;
-            ctx.fillRect(-6, -12, 12, 12); // Box
-            ctx.fillStyle = '#fff'; // Slot
-            ctx.fillRect(-4, -10, 8, 2);
-        }
-        else if (this.propType === 'trash_bin') {
-            ctx.fillStyle = '#113311';
-            ctx.beginPath();
-            ctx.arc(0, 0, 8, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(0, 0, 7, 0, Math.PI*2);
-            ctx.fill();
-        }
-        else if (this.propType === 'cone') {
-             ctx.fillStyle = '#ffae00';
-             ctx.beginPath();
-             ctx.moveTo(0, -10);
-             ctx.arc(0, 0, 6, 0, Math.PI*2);
-             ctx.fill();
-             ctx.fillStyle = '#ffcc00';
-             ctx.beginPath();
-             ctx.arc(0, 0, 3, 0, Math.PI*2);
-             ctx.fill();
-        }
-        else if (this.propType === 'pole') {
-            ctx.fillStyle = '#555';
-            ctx.beginPath();
-            ctx.arc(0, 0, 4, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255, 255, 200, 0.5)';
-            ctx.beginPath();
-            ctx.arc(0, 0, 8, 0, Math.PI*2);
-            ctx.fill();
-        }
-        else if (this.propType === 'human') {
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(0, 0, 6, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = '#333';
-            ctx.beginPath();
-            ctx.ellipse(0, 6, 8, 4, 0, 0, Math.PI*2);
-            ctx.fill();
-        }
-        else if (['car', 'bus', 'truck', 'police', 'van', 'motorcycle'].includes(this.propType)) {
-             this.drawVehicle(ctx);
-        }
-        else if (['building', 'kiosk', 'small_shop'].includes(this.propType)) {
-             this.drawBuilding(ctx);
-        }
-        else if (this.propType === 'shelter') {
-             ctx.fillStyle = 'rgba(0,0,0,0.3)';
-             ctx.fillRect(-20, -10, 40, 20);
-             ctx.fillStyle = '#888';
-             ctx.fillRect(-20, -10, 5, 20);
-             ctx.fillRect(15, -10, 5, 20);
-             ctx.fillRect(-20, -10, 40, 2);
-             ctx.fillStyle = '#444';
-             ctx.fillRect(-22, -12, 44, 24);
-        }
-        else {
-             ctx.fillStyle = this.color;
-             ctx.beginPath();
-             ctx.arc(0, 0, this.radius, 0, Math.PI*2);
-             ctx.fill();
+        // Draw Logic per Type
+        if (this.propType === 'rubik') {
+            this.drawCube(ctx, this.radius);
+        } else if (this.propType === 'human') {
+            this.drawHuman(ctx);
+        } else if (['car', 'bus', 'truck', 'van', 'scooter'].includes(this.propType)) {
+            this.drawVehicle(ctx);
+        } else if (['building', 'small_shop', 'kiosk', 'shelter'].includes(this.propType)) {
+            this.drawBuilding(ctx);
+        } else {
+            // Generic props (Cone, Bottle, Pole)
+            this.drawGeneric(ctx);
         }
 
         ctx.restore();
     }
 
-    drawVehicle(ctx) {
-        const w = this.length || 40;
-        const h = this.width || 20;
-        const isTruck = this.propType === 'truck';
-        const isBus = this.propType === 'bus';
-        const isMoto = this.propType === 'motorcycle';
+    drawGeneric(ctx) {
+        const r = this.radius;
+        // Outline
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#2C3E50';
 
-        if (!isMoto) {
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+        if (this.propType === 'cone') {
+            ctx.fillStyle = '#E67E22';
             ctx.beginPath();
-            ctx.moveTo(w/2, -h/3);
-            ctx.lineTo(w/2 + 60, -h);
-            ctx.lineTo(w/2 + 60, h);
-            ctx.lineTo(w/2, h/3);
+            ctx.arc(0, 0, r, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Detail
+            ctx.fillStyle = '#F39C12'; // Highlight
+            ctx.beginPath();
+            ctx.arc(0, 0, r/2, 0, Math.PI*2);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Shine
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.arc(-r/3, -r/3, r/4, 0, Math.PI*2);
             ctx.fill();
         }
+    }
 
-        ctx.fillStyle = this.color;
-        this.roundRect(ctx, -w/2, -h/2, w, h, isBus ? 2 : (isMoto ? 2 : 5));
+    drawCube(ctx, r) {
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#2C3E50';
+
+        // Draw Base White Cube
+        const s = r * 1.5;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-s/2, -s/2, s, s);
+        ctx.strokeRect(-s/2, -s/2, s, s);
+
+        // Draw Stored Face Colors
+        // Top-Left
+        ctx.fillStyle = this.rubikColors[0];
+        ctx.fillRect(-s/2 + 2, -s/2 + 2, s/2 - 4, s/2 - 4);
+        // Top-Right
+        ctx.fillStyle = this.rubikColors[1];
+        ctx.fillRect(0 + 2, -s/2 + 2, s/2 - 4, s/2 - 4);
+        // Bottom-Left
+        ctx.fillStyle = this.rubikColors[2];
+        ctx.fillRect(-s/2 + 2, 0 + 2, s/2 - 4, s/2 - 4);
+        // Bottom-Right
+        ctx.fillStyle = this.rubikColors[3];
+        ctx.fillRect(0 + 2, 0 + 2, s/2 - 4, s/2 - 4);
+    }
+
+    drawHuman(ctx) {
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#2C3E50';
+
+        // Head
+        ctx.fillStyle = '#F1C40F'; // Yellow skin like Lego/Emoji
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI*2);
         ctx.fill();
+        ctx.stroke();
 
-        ctx.fillStyle = '#222';
-        if (isTruck) {
-             ctx.fillRect(w/4, -h/2 + 2, w/4 - 2, h - 4);
-        } else if (isMoto) {
-             ctx.fillRect(-w/4, -h/4, w/2, h/2); // Seat/Engine
-             ctx.fillStyle = '#fff'; // Headlight
-             ctx.fillRect(w/2-2, -2, 2, 4);
-        } else {
-             this.roundRect(ctx, -w/4, -h/2 + 4, w/2, h - 8, 3);
-             ctx.fill();
-        }
+        // Glasses/Eyes
+        ctx.fillStyle = '#2C3E50';
+        ctx.fillRect(-5, -2, 10, 4);
+    }
+
+    drawVehicle(ctx) {
+        const w = this.length;
+        const h = this.width;
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#2C3E50';
+
+        // Body
+        ctx.fillStyle = this.color;
+        this.roundRect(ctx, -w/2, -h/2, w, h, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        // Windshield
+        ctx.fillStyle = '#A9CCE3'; // Light Blue Glass
+        ctx.fillRect(w/4, -h/2 + 4, w/4, h - 8);
+        ctx.strokeRect(w/4, -h/2 + 4, w/4, h - 8);
+
+        // Roof highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(-w/4, -h/2 + 6, w/2, h - 12);
     }
 
     drawBuilding(ctx) {
         const w = this.width;
         const h = this.length;
-        const height3D = this.height;
+        const isShop = this.propType === 'small_shop';
 
-        const shiftX = 0;
-        const shiftY = -height3D / 2;
-
-        // Base Shadow
-        // Physics collision uses (x,y) as center.
-        // We draw base centered at 0,0.
-        // Shadow slightly offset.
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(-w/2 + 10, -h/2 + 10, w, h);
-
-        // Roof
-        ctx.fillStyle = '#111';
-        ctx.fillRect(-w/2 + shiftX, -h/2 + shiftY, w, h);
-
-        ctx.strokeStyle = this.color;
         ctx.lineWidth = 4;
-        ctx.strokeRect(-w/2 + shiftX, -h/2 + shiftY, w, h);
+        ctx.strokeStyle = '#2C3E50';
 
-        // Sides
+        // Roof (Top down view)
         ctx.fillStyle = this.color;
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath();
-        ctx.moveTo(-w/2, -h/2);
-        ctx.lineTo(-w/2 + shiftX, -h/2 + shiftY);
-        ctx.lineTo(w/2 + shiftX, -h/2 + shiftY);
-        ctx.lineTo(w/2, -h/2);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
+        ctx.fillRect(-w/2, -h/2, w, h);
+        ctx.strokeRect(-w/2, -h/2, w, h);
 
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = 0.2;
-        ctx.fillRect(-w/2 + shiftX + 10, -h/2 + shiftY + 10, w - 20, h - 20);
-        ctx.globalAlpha = 1.0;
+        // Inner Roof details (AC units, vents)
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(-w/2 + 10, -h/2 + 10, w - 20, h - 20);
 
-        // Shop Details?
-        if (this.propType === 'small_shop') {
+        // "3D" Side effect (Fake perspective by drawing a bottom offset rect)
+        ctx.fillStyle = '#2C3E50';
+        ctx.fillRect(-w/2, h/2, w, 10); // Shadow/Side
+
+        if (isShop) {
             ctx.fillStyle = '#fff';
-            ctx.globalAlpha = 0.8;
-            ctx.font = '20px sans-serif';
+            ctx.font = 'bold 24px Montserrat';
             ctx.textAlign = 'center';
-            ctx.fillText('SHOP', shiftX, shiftY + 10);
-            ctx.globalAlpha = 1.0;
+            ctx.textBaseline = 'middle';
+            ctx.fillText('SHOP', 0, 0);
         }
     }
 
