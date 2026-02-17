@@ -6,36 +6,36 @@ export default class Prop extends Entity {
         // Tier 1: Trash / Small Objects (Eatable by 15-20)
         'bottle': { radius: 5, value: 1, color: '#33ff33', isSolid: false, height: 10 },
         'cone':   { radius: 8, value: 2, color: '#ffae00', isSolid: false, height: 15 },
-        'mailbox':{ radius: 10, value: 3, color: '#0055ff', isSolid: true, height: 15 }, // New
+        'mailbox':{ radius: 10, value: 5, color: '#0055ff', isSolid: true, height: 15 },
 
         // Tier 2: Street Furniture (Eatable by 20-30)
-        'pole':   { radius: 12, value: 5, color: '#888888', isSolid: true, height: 60 },
-        'fence':  { radius: 15, value: 8, color: '#aaaaaa', isSolid: true, height: 20 },
-        'trash_bin': { radius: 18, value: 10, color: '#225522', isSolid: true, height: 20 }, // New
+        'pole':   { radius: 12, value: 10, color: '#888888', isSolid: true, height: 60 }, // Buffed
+        'fence':  { radius: 15, value: 15, color: '#aaaaaa', isSolid: true, height: 20 }, // Buffed
+        'trash_bin': { radius: 18, value: 20, color: '#225522', isSolid: true, height: 20 }, // Buffed
 
         // Tier 3: Living Beings (Eatable by 30-40)
-        'human':  { radius: 18, value: 15, color: '#ffccaa', isSolid: false, height: 35 },
-        'bench':  { radius: 20, value: 20, color: '#8B4513', isSolid: true, height: 15 },
-        'motorcycle': { radius: 28, value: 30, color: '#ff0000', isSolid: false, height: 20 }, // New
+        'human':  { radius: 18, value: 25, color: '#ffccaa', isSolid: false, height: 35 }, // Buffed
+        'bench':  { radius: 20, value: 30, color: '#8B4513', isSolid: true, height: 15 }, // Buffed
+        'motorcycle': { radius: 28, value: 50, color: '#ff0000', isSolid: false, height: 20 }, // Buffed
 
         // Tier 3.5: Small Structures / Kiosks (Eatable by 40-50)
-        'kiosk':  { radius: 35, value: 40, color: '#ff0055', isSolid: true, height: 40 },
+        'kiosk':  { radius: 35, value: 80, color: '#ff0055', isSolid: true, height: 40 }, // Buffed
 
         // Tier 4: Vehicles (Eatable by 50-70)
-        'car':    { radius: 45, value: 80, color: 'random', isSolid: false, height: 25 },
-        'van':    { radius: 55, value: 120, color: '#ffffff', isSolid: false, height: 35 }, // New
+        'car':    { radius: 45, value: 100, color: 'random', isSolid: false, height: 25 }, // Buffed
+        'van':    { radius: 55, value: 150, color: '#ffffff', isSolid: false, height: 35 },
 
         // Tier 5: Large Vehicles (Eatable by 70-100)
-        'bus':    { radius: 60, value: 150, color: '#ffae00', isSolid: false, height: 50 },
-        'truck':  { radius: 70, value: 180, color: '#ffffff', isSolid: false, height: 60 },
+        'bus':    { radius: 60, value: 200, color: '#ffae00', isSolid: false, height: 50 },
+        'truck':  { radius: 70, value: 250, color: '#ffffff', isSolid: false, height: 60 },
 
-        'shelter':{ radius: 80, value: 250, color: '#444444', isSolid: true, height: 50 },
+        'shelter':{ radius: 80, value: 400, color: '#444444', isSolid: true, height: 50 }, // Buffed
 
         // Tier 5.5: Medium Structures
-        'small_shop': { radius: 120, value: 500, color: '#00aaaa', isSolid: true, height: 80 }, // New
+        'small_shop': { radius: 120, value: 800, color: '#00aaaa', isSolid: true, height: 80 }, // Buffed
 
         // Tier 6: Buildings (Eatable by 250+)
-        'building': { radius: 200, value: 1000, color: 'random', isSolid: true, height: 300 }
+        'building': { radius: 200, value: 2500, color: 'random', isSolid: true, height: 300 } // Huge Buff
     };
 
     constructor(x, y, type) {

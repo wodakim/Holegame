@@ -12,7 +12,7 @@ export default class Bot extends Hole {
         this.speed = 150;
 
         // Bot Leveling Logic
-        this.nextThreshold = 1000; // Same start as player
+        this.nextThreshold = 300; // Adjusted for Hardcore mode (was 1000)
         this.level = 1;
         this.upgradePool = ['speed', 'size', 'satellite', 'suction', 'digest', 'cooldown'];
     }
@@ -127,7 +127,8 @@ export default class Bot extends Hole {
     }
 
     levelUp() {
-        const increment = this.level * 1500;
+        // Scaled for Hardcore scoring (approx 1/3 of previous)
+        const increment = this.level * 500;
         this.nextThreshold += increment;
         this.level++;
 

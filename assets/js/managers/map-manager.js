@@ -1,4 +1,5 @@
 import Prop from '../entities/prop.js';
+import Human from '../entities/human.js';
 
 export default class MapManager {
     constructor(gameManager) {
@@ -88,7 +89,7 @@ export default class MapManager {
             }
             // Some pedestrians
             for(let i=0; i<3; i++) {
-                entities.push(new Prop(centerX + (Math.random()-0.5)*200, centerY + (Math.random()-0.5)*200, 'human'));
+                entities.push(new Human(centerX + (Math.random()-0.5)*200, centerY + (Math.random()-0.5)*200));
             }
         } else {
             // Parking Lot (Cars)
@@ -145,7 +146,7 @@ export default class MapManager {
             list.push(new Prop(x, y, 'shelter'));
         } else if (roll < 0.85) {
             // Human
-            list.push(new Prop(x, y, 'human'));
+            list.push(new Human(x, y));
         } else {
             // Kiosk
             list.push(new Prop(x, y, 'kiosk'));

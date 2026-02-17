@@ -179,9 +179,9 @@ export default class Physics {
     }
 
     resolveRectCollision(hole, prop) {
-        // Rect dimensions
-        const hw = prop.width / 2;
-        const hh = prop.length / 2; // In Prop, length is height (y-axis size) usually
+        // Rect dimensions - Tightened for better feel (ignore shadows/edges)
+        const hw = (prop.width / 2) * 0.85; // 85% of visual width
+        const hh = (prop.length / 2) * 0.85; // 85% of visual length
 
         // Clamp point (hole center) to rect
         const closestX = Math.max(prop.x - hw, Math.min(hole.x, prop.x + hw));

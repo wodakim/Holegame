@@ -203,6 +203,9 @@ export default class GameManager {
                 entity.update(dt, this.entities);
             } else if (entity.isPolice) {
                 entity.update(dt, this.entities);
+            } else if (entity.propType === 'human') {
+                // Humans need entity list for AI (fleeing)
+                entity.update(dt, this.entities);
             } else {
                 if (entity.update) entity.update(dt);
             }
