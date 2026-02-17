@@ -56,20 +56,27 @@ export default class Physics {
 
                     if (dist < pullRadius) {
                         // Pull Force
-                        // Stronger when closer. Significantly increased force for "Juicy" feel.
-                        // Formula: Base Force * (Hole Size Factor) / Distance Factor
-                        const force = ((hole.radius + 50) / (dist + 20)) * 2500 * dt;
+                        // Tuned Formula: Base Force * (Hole Size Factor) / Distance Factor
+                        // Reduced from 2500 back to 1000 to prevent overshooting
+                        const force = ((hole.radius + 50) / (dist + 20)) * 1000 * dt;
                         const nx = dx / dist;
                         const ny = dy / dist;
+                        const step = force;
 
                         // Stop traffic if caught
                         if (prop.velocity) {
-                            prop.velocity.x *= 0.9;
-                            prop.velocity.y *= 0.9;
+                            prop.velocity.x *= 0.8; // Stronger friction
+                            prop.velocity.y *= 0.8;
                         }
 
-                        prop.x += nx * force;
-                        prop.y += ny * force;
+                        // Prevent Overshooting: If step is larger than distance, move exactly to center
+                        if (step > dist) {
+                            prop.x = hole.x;
+                            prop.y = hole.y;
+                        } else {
+                            prop.x += nx * step;
+                            prop.y += ny * step;
+                        }
 
                         // Shake
                         if (prop.shake) {
