@@ -1,0 +1,53 @@
+/* New Mode Selection */
+.mode-select {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.btn-mode {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--color-primary);
+    color: var(--color-primary);
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-mode.selected {
+    background: var(--color-primary);
+    color: #000;
+    box-shadow: 0 0 10px var(--color-primary);
+}
+
+/* Spinner */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top: 5px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#match-status {
+    color: var(--color-secondary);
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#matchmaking-overlay {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}

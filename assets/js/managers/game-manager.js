@@ -27,9 +27,9 @@ export default class GameManager {
         this.gameTime = 120; // 2 minutes
 
         // Configuration
-        this.botCount = 10; // Increased bots for larger map
-        this.propCount = 1000; // Increased props for larger map
-        this.worldSize = 4000; // Larger Map
+        this.botCount = 10;
+        this.propCount = 1000;
+        this.worldSize = 4000;
 
         this.policeCount = 0;
         this.maxPolice = 2;
@@ -41,21 +41,20 @@ export default class GameManager {
         this.paused = false;
     }
 
-    startGame() {
+    startGame(duration = 120) { // Accept duration
         this.paused = false;
-        this.app.soundManager.init(); // User gesture required
+        this.app.soundManager.init();
         this.state = 'PLAYING';
         this.score = 0;
         this.kills = 0;
-        this.gameTime = 120;
+        this.gameTime = duration;
         this.entities = [];
 
         // UI Transition
-        this.app.saveManager.updateUI(); // Refresh coins in UI
+        this.app.saveManager.updateUI();
         this.app.uiManager.switchScreen('hud');
 
         // Create Player
-        // Load skin from saveManager
         const skinInfo = this.app.saveManager.getCurrentSkinInfo();
         this.player = new Player(0, 0, 40, skinInfo.color, 'You', this.app.saveManager);
         this.player.shape = skinInfo.shape || 'circle';
@@ -77,7 +76,7 @@ export default class GameManager {
 
     update(dt) {
         if (this.state !== 'PLAYING') return;
-        if (this.paused) return; // Pause Logic
+        if (this.paused) return;
 
         // Handle SlowMo Recovery
         if (this.slowMoTimer > 0) {
@@ -156,9 +155,6 @@ export default class GameManager {
                     // Camera Follow Player
                     this.camera.follow(this.player, dt);
 
-                    // Adjust Zoom based on player size
-                    // Base zoom is 1.0 at radius 40.
-                    // Max zoom out (0.4) at radius 500.
                     const targetZoom = Math.max(0.4, 1 - (this.player.radius - 40) / 800);
                     this.camera.setTargetZoom(targetZoom);
                 }
@@ -206,16 +202,13 @@ export default class GameManager {
     }
 
     checkPoliceSpawn(dt) {
-        // Only spawn if player is big enough
         if (!this.player || this.player.markedForDeletion) return;
 
-        if (this.player.score > 500) { // Threshold for police attention
+        if (this.player.score > 500) {
              this.policeSpawnTimer += dt;
-
-             // Check current police count
              const currentPolice = this.entities.filter(e => e.isPolice).length;
 
-             if (currentPolice < this.maxPolice && this.policeSpawnTimer > 10) { // Every 10s check
+             if (currentPolice < this.maxPolice && this.policeSpawnTimer > 10) {
                  this.spawnPolice();
                  this.policeSpawnTimer = 0;
              }
@@ -223,22 +216,19 @@ export default class GameManager {
     }
 
     spawnPolice() {
-        // Spawn relative to player but not too close
         const angle = Math.random() * Math.PI * 2;
         const dist = 800 + Math.random() * 400;
         const x = this.player.x + Math.cos(angle) * dist;
         const y = this.player.y + Math.sin(angle) * dist;
 
-        // Clamp to world
         const clampedX = Math.max(-this.worldSize/2, Math.min(this.worldSize/2, x));
         const clampedY = Math.max(-this.worldSize/2, Math.min(this.worldSize/2, y));
 
-        const police = new PoliceBot(clampedX, clampedY, 60); // Slightly larger than start
+        const police = new PoliceBot(clampedX, clampedY, 60);
         this.entities.push(police);
 
-        // Announce
         this.app.uiManager.showNotification("POLICE ALERT!", "#ff0000");
-        this.app.soundManager.play('siren'); // Assuming sound manager handles this, or generic alert
+        this.app.soundManager.play('siren');
     }
 
     spawnBot() {
@@ -256,7 +246,7 @@ export default class GameManager {
                 dist = 9999;
             }
             attempts++;
-        } while (dist < 800 && attempts < 10); // Don't spawn too close
+        } while (dist < 800 && attempts < 10);
 
         const names = ['VoidWalker', 'Eater_X', 'NoBrainer', 'Destroyer99', 'AbyssKing', 'NullPtr', 'GlitchUser', 'System32'];
         const name = names[Math.floor(Math.random() * names.length)];
@@ -268,7 +258,6 @@ export default class GameManager {
     }
 
     spawnInitialProps() {
-        // Generate "City Blocks"
         const blockSize = 400;
         const blocks = Math.floor(this.worldSize / blockSize);
 
@@ -278,17 +267,12 @@ export default class GameManager {
     }
 
     spawnProp() {
-        // More intelligent spawning:
-        // 1. Pick a random grid cell (City Block)
-        // 2. Spawn inside it
-
         const x = (Math.random() - 0.5) * this.worldSize;
         const y = (Math.random() - 0.5) * this.worldSize;
 
         const rand = Math.random();
         let type, width, height, color, value;
 
-        // Increased building chance (30%)
         if (rand < 0.3) {
             type = 'building';
             width = 50 + Math.random() * 50;
@@ -296,13 +280,13 @@ export default class GameManager {
             const bColors = ['#00ffff', '#ff00ff', '#39ff14', '#ffffff'];
             color = bColors[Math.floor(Math.random() * bColors.length)];
             value = 20 + Math.floor(width/10);
-        } else if (rand < 0.6) { // 30% Cars/Traffic (Static parked cars)
+        } else if (rand < 0.6) {
             type = 'car';
             width = 20;
             height = 30;
             color = Math.random() > 0.5 ? '#cc0000' : '#0000cc';
             value = 5;
-        } else { // 40% Small Objects (Cones, Barrels, Boxes)
+        } else {
             type = 'cone';
             width = 10;
             height = 10;
@@ -317,7 +301,8 @@ export default class GameManager {
     spawnPowerUp() {
         const x = (Math.random() - 0.5) * this.worldSize;
         const y = (Math.random() - 0.5) * this.worldSize;
-        const types = ['magnet', 'speed', 'shield'];
+        // Removed 'magnet'
+        const types = ['speed', 'shield'];
         const type = types[Math.floor(Math.random() * types.length)];
         this.entities.push(new PowerUp(x, y, type));
     }
@@ -347,7 +332,6 @@ export default class GameManager {
     }
 
     spawnParticles(x, y, color, amount = 5) {
-        // Reduced particle count for performance and cleaner look
         const count = Math.min(amount, 8);
         for (let i = 0; i < count; i++) {
             this.entities.push(new Particle(x, y, color));
@@ -360,9 +344,7 @@ export default class GameManager {
 
     updateHUD() {
         if (!this.player) return;
-
         const holes = this.entities.filter(e => e.type === 'hole');
-        // Pass entities for Minimap if needed, or Minimap accesses gameManager
         this.app.uiManager.updateHUD(this.gameTime, this.player.score, this.kills, holes, this.player);
     }
 

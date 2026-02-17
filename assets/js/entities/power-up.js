@@ -2,13 +2,13 @@ import Entity from './entity.js';
 
 export default class PowerUp extends Entity {
     constructor(x, y, type) {
+        // Only keep Speed and Shield
         super(x, y, 20, '#fff'); // Fixed size
         this.type = 'powerup';
-        this.powerType = type; // 'magnet', 'speed', 'shield'
+        this.powerType = type; // 'speed', 'shield'
         this.life = 10; // Disappear after 10s if not picked up
 
         // Colors
-        if (type === 'magnet') this.color = '#ff00ff';
         if (type === 'speed') this.color = '#00ffff';
         if (type === 'shield') this.color = '#ffff00';
     }
@@ -37,7 +37,6 @@ export default class PowerUp extends Entity {
         ctx.textBaseline = 'middle';
 
         let label = '?';
-        if (this.powerType === 'magnet') label = 'M';
         if (this.powerType === 'speed') label = 'S';
         if (this.powerType === 'shield') label = '🛡️';
 
