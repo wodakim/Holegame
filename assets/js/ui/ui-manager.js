@@ -9,7 +9,8 @@ export default class UIManager {
             shop: document.getElementById('screen-shop'),
             gameOver: document.getElementById('screen-game-over'),
             pause: document.getElementById('screen-pause'),
-            matchmaking: document.getElementById('screen-matchmaking')
+            matchmaking: document.getElementById('screen-matchmaking'),
+            levelup: document.getElementById('screen-levelup') // New
         };
 
         this.minimap = new Minimap(document.getElementById('minimap-canvas'), app);
@@ -26,7 +27,6 @@ export default class UIManager {
             });
         });
 
-        // document.getElementById('btn-play').addEventListener('click', () => this.app.gameManager.startGame()); // Removed
         document.getElementById('btn-shop').addEventListener('click', () => this.app.shopManager.openShop());
         document.getElementById('btn-no-ads').addEventListener('click', () => this.app.shopManager.buyNoAds());
 
@@ -36,7 +36,6 @@ export default class UIManager {
         // Game Over
         document.getElementById('btn-revive').addEventListener('click', () => this.app.gameManager.revivePlayer());
         document.getElementById('btn-replay').addEventListener('click', () => {
-             // Replay with last duration or default 2 mins
              this.app.gameManager.startGame(this.lastDuration || 120);
         });
 
@@ -51,7 +50,7 @@ export default class UIManager {
         this.switchScreen('matchmaking');
 
         const waitSpan = document.getElementById('wait-time');
-        let timeLeft = 3; // 3 seconds wait
+        let timeLeft = 3;
         if (waitSpan) waitSpan.textContent = timeLeft;
 
         const interval = setInterval(() => {
@@ -61,15 +60,80 @@ export default class UIManager {
 
         setTimeout(() => {
             clearInterval(interval);
-            // Ensure context is correct
             if (this.app && this.app.gameManager) {
                 this.app.gameManager.startGame(duration);
             }
         }, 3000);
     }
 
+    showCountdown(num) {
+        let el = document.getElementById('countdown-overlay');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'countdown-overlay';
+            el.style.position = 'absolute';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.width = '100%';
+            el.style.height = '100%';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'center';
+            el.style.alignItems = 'center';
+            el.style.fontSize = '8rem';
+            el.style.fontWeight = '900';
+            el.style.color = '#fff';
+            el.style.textShadow = '0 0 20px #00f3ff';
+            el.style.zIndex = '100';
+            el.style.pointerEvents = 'none';
+            document.body.appendChild(el);
+        }
+        el.textContent = num;
+        el.classList.remove('hidden');
+    }
+
+    updateCountdown(num) {
+        const el = document.getElementById('countdown-overlay');
+        if (el) el.textContent = num;
+    }
+
+    hideCountdown() {
+        const el = document.getElementById('countdown-overlay');
+        if (el) el.classList.add('hidden');
+    }
+
+    showLevelUp(choices, onSelect) {
+        this.switchScreen('levelup');
+        const container = document.getElementById('upgrade-cards-container');
+        if (!container) return; // Should exist in HTML
+        container.innerHTML = ''; // Clear old
+
+        choices.forEach(choice => {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+
+            const icon = document.createElement('div');
+            icon.className = 'upgrade-icon';
+            icon.textContent = choice.icon;
+
+            const title = document.createElement('h3');
+            title.textContent = choice.name;
+
+            const desc = document.createElement('p');
+            desc.textContent = choice.desc;
+
+            card.appendChild(icon);
+            card.appendChild(title);
+            card.appendChild(desc);
+
+            card.addEventListener('click', () => {
+                onSelect(choice.id);
+            });
+
+            container.appendChild(card);
+        });
+    }
+
     switchScreen(screenName) {
-        // Hide all
         Object.values(this.screens).forEach(s => {
             if (s) {
                 s.classList.add('hidden');
@@ -77,7 +141,6 @@ export default class UIManager {
             }
         });
 
-        // Show target
         const screen = this.screens[screenName];
         if (screen) {
             screen.classList.remove('hidden');
@@ -86,16 +149,13 @@ export default class UIManager {
     }
 
     updateHUD(time, score, kills, players, player) {
-        // Timer
         const mins = Math.floor(time / 60);
         const secs = Math.floor(time % 60);
         document.getElementById('game-timer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
 
-        // Score
         document.getElementById('hud-score').textContent = Math.floor(score);
         document.getElementById('hud-kills').textContent = kills;
 
-        // Leaderboard
         const leaderboard = document.getElementById('leaderboard');
         leaderboard.innerHTML = '';
 
@@ -109,7 +169,6 @@ export default class UIManager {
             leaderboard.appendChild(div);
         });
 
-        // Update Minimap
         this.minimap.update();
     }
 

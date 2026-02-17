@@ -476,3 +476,71 @@ button {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
+
+/* Level Up Screen */
+.levelup-title {
+    font-size: 3rem;
+    color: var(--color-tertiary);
+    text-shadow: 0 0 20px var(--color-tertiary);
+    animation: bounce 0.5s infinite alternate;
+}
+
+.cards-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.upgrade-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    width: 200px;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+}
+
+.upgrade-card:hover {
+    transform: scale(1.1) translateY(-10px);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.upgrade-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+}
+
+.upgrade-card h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.upgrade-card p {
+    color: #ccc;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+}
+
+/* Countdown Overlay */
+#countdown-overlay {
+    transition: transform 0.2s;
+}
