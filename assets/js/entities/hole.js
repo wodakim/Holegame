@@ -5,23 +5,23 @@ export default class Hole extends Entity {
         super(x, y, radius, color, name);
         this.type = 'hole';
         this.name = name;
-        this.speed = 150; // Base speed (reduced from 200)
+        this.speed = 150; // Base speed
         this.score = 0;
-        this.shape = 'circle'; // circle, square, star, gear
+        this.shape = 'circle';
         this.trail = [];
         this.trailTimer = 0;
 
         // Upgrade Stats
         this.growthMultiplier = 1.0;
         this.suctionRange = 1.0;
-        this.satellites = 0; // Number of small orbiting holes
+        this.satellites = 0;
 
         // Power-ups
-        this.activePowerUps = {}; // { type: durationLeft }
+        this.activePowerUps = {};
     }
 
     applyPowerUp(type) {
-        this.activePowerUps[type] = 5.0; // 5 seconds
+        this.activePowerUps[type] = 5.0;
     }
 
     update(dt) {
@@ -34,15 +34,11 @@ export default class Hole extends Entity {
         });
 
         // Speed Logic
-        // Base speed decreases slightly with size, but active speed boost overrides.
-        let baseSpeed = this.speed; // From upgrades
-        // Slow down as we get huge (logarithmic penalty)
+        let baseSpeed = this.speed;
         const sizePenalty = Math.max(0, (this.radius - 25) * 0.2);
         const currentSpeed = this.activePowerUps['speed'] ? (baseSpeed + 200) : Math.max(50, baseSpeed - sizePenalty);
 
-        // Apply to entity logic (GameManager handles input -> velocity)
-        // But here we just expose 'speed' property for input handler.
-        this.currentSpeed = currentSpeed; // Use this in Player/Bot update
+        this.currentSpeed = currentSpeed;
 
         // Trail logic
         this.trailTimer += dt;
@@ -56,25 +52,15 @@ export default class Hole extends Entity {
     }
 
     grow(amount) {
-        // Apply Growth Multiplier (Upgrade)
         const effectiveAmount = amount * this.growthMultiplier;
-
         this.score += effectiveAmount;
 
-        // Logarithmic Growth Formula
-        // Initial Radius: 25 (Area ~1963)
-        // We want growth to be slow.
-        // New Area = Old Area + (Amount * Constant)
-        // Constant was 100. Let's make it 10 for very slow growth.
-        // It should take many small items to grow visibly.
-
         const currentArea = Math.PI * this.radius * this.radius;
-        const addedArea = effectiveAmount * 12; // Further reduced for scalable challenge
+        const addedArea = effectiveAmount * 12;
         const newArea = currentArea + addedArea;
 
         this.radius = Math.sqrt(newArea / Math.PI);
 
-        // Cap max size
         if (this.radius > 600) this.radius = 600;
     }
 
@@ -82,7 +68,7 @@ export default class Hole extends Entity {
         this.score = Math.max(0, this.score - amount * 5);
         const currentArea = Math.PI * this.radius * this.radius;
         const removeArea = amount * 15;
-        const newArea = Math.max(Math.PI * 25 * 25, currentArea - removeArea); // Min radius 25
+        const newArea = Math.max(Math.PI * 25 * 25, currentArea - removeArea);
         this.radius = Math.sqrt(newArea / Math.PI);
     }
 
@@ -90,25 +76,24 @@ export default class Hole extends Entity {
         console.log(`Applying upgrade: ${type} to ${this.name}`);
         switch(type) {
             case 'speed':
-                this.speed += 20; // Permanent +20 speed
+                this.speed += 30; // Increased from 20 to 30 for visibility
                 break;
             case 'size':
-                // Immediate +5% radius
-                this.radius *= 1.05;
+                // Reduced from 5% to 2% instant growth to prevent OP snowballing
+                this.radius *= 1.02;
                 break;
             case 'satellite':
                 this.satellites++;
                 break;
             case 'suction':
-                this.suctionRange += 0.2; // +20% range
+                this.suctionRange += 0.2;
                 break;
             case 'digest':
-                this.growthMultiplier += 0.2; // +20% growth per item
+                // Reduced from 20% to 10% to slow runaway growth
+                this.growthMultiplier += 0.1;
                 break;
-            case 'cooldown': // Replaced with "Dash" or just "Growth" if no dash
-                // Let's make this "Agility" -> Turn speed? Or Score Multiplier?
-                // Let's go with Score Multiplier for now, or just more Speed.
-                this.speed += 10;
+            case 'cooldown':
+                this.speed += 15; // Agility boost
                 break;
         }
     }

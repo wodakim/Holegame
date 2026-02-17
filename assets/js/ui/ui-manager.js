@@ -59,6 +59,7 @@ export default class UIManager {
         document.getElementById('btn-replay').addEventListener('click', () => {
              this.app.gameManager.startGame(this.lastDuration || 120);
         });
+        document.getElementById('btn-menu-gameover').addEventListener('click', () => this.app.gameManager.quitGame());
 
         // Pause
         document.getElementById('btn-pause').addEventListener('click', () => this.app.gameManager.pauseGame());

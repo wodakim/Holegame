@@ -208,16 +208,7 @@ export default class GameManager {
         });
 
         // 5. Cleanup & Spawning
-        if (this.player) {
-            this.entities.forEach(e => {
-                if (e.type === 'hole' && e !== this.player) {
-                    const dx = e.x - this.player.x;
-                    const dy = e.y - this.player.y;
-                    if (dx*dx + dy*dy > 2500*2500) e.markedForDeletion = true;
-                }
-            });
-        }
-
+        // Removed Bot Despawn Logic to allow them to live/grow globally
         this.entities = this.entities.filter(e => !e.markedForDeletion);
 
         const currentBots = this.entities.filter(e => e.type === 'hole' && e !== this.player).length;

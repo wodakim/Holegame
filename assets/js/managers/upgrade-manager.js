@@ -1,7 +1,6 @@
 export default class UpgradeManager {
     constructor(gameManager) {
         this.gameManager = gameManager;
-        // Scalable difficulty: Start at 1000, then +2000, +3000...
         this.baseThreshold = 1000;
         this.nextThreshold = this.baseThreshold;
         this.level = 1;
@@ -9,24 +8,20 @@ export default class UpgradeManager {
         this.isChoosing = false;
 
         // Define Upgrade Options
+        // Updated descriptions to reflect rebalance
         this.upgrades = [
-            { id: 'speed', name: 'TURBO BOOST', desc: '+10% Speed', icon: '⚡' },
-            { id: 'size', name: 'MASS EXPANSION', desc: '+5% Size Instantly', icon: '🟣' },
+            { id: 'speed', name: 'TURBO BOOST', desc: '+30 Base Speed', icon: '⚡' },
+            { id: 'size', name: 'MASS EXPANSION', desc: '+2% Size Instantly', icon: '🟣' },
             { id: 'satellite', name: 'ORBITAL VOID', desc: 'Adds a small satellite hole', icon: '🪐' },
             { id: 'suction', name: 'GRAVITY WELL', desc: '+20% Suction Range', icon: '🧲' },
-            { id: 'digest', name: 'METABOLISM', desc: '+20% Growth per item', icon: '🧬' },
-            { id: 'cooldown', name: 'AGILITY', desc: '+10 Base Speed', icon: '🏃' }
+            { id: 'digest', name: 'METABOLISM', desc: '+10% Growth per item', icon: '🧬' },
+            { id: 'cooldown', name: 'AGILITY', desc: '+15 Base Speed', icon: '🏃' }
         ];
     }
 
     checkLevelUp(playerScore) {
         if (playerScore >= this.nextThreshold) {
             this.triggerLevelUp();
-            // Increase threshold progressively (Linear scaling but harder)
-            // Level 1: 1000
-            // Level 2: 1000 + (1 * 1500) = 2500
-            // Level 3: 2500 + (2 * 1500) = 5500
-            // This makes it scalable and harder as you go.
             const increment = this.level * 1500;
             this.nextThreshold += increment;
             this.level++;
@@ -36,10 +31,9 @@ export default class UpgradeManager {
     triggerLevelUp() {
         if (this.isChoosing) return;
 
-        this.gameManager.paused = true; // Pause Game
+        this.gameManager.paused = true;
         this.isChoosing = true;
 
-        // Select 3 random upgrades from pool
         const choices = [];
         const pool = [...this.upgrades];
 
@@ -49,7 +43,6 @@ export default class UpgradeManager {
             choices.push(pool.splice(idx, 1)[0]);
         }
 
-        // Show UI via UIManager
         this.gameManager.app.uiManager.showLevelUp(choices, (selectedId) => {
             this.applyUpgrade(selectedId);
         });
@@ -59,13 +52,8 @@ export default class UpgradeManager {
         const player = this.gameManager.player;
         if (!player) return;
 
-        // Apply to Player using Hole's method
         player.addUpgrade(id);
 
-        // REMOVED: Unfair bot buffing logic.
-        // Bots now level up independently in their update loop.
-
-        // Resume Game
         this.isChoosing = false;
         this.gameManager.paused = false;
         this.gameManager.app.uiManager.switchScreen('hud');
