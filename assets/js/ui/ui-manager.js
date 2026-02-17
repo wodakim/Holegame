@@ -61,7 +61,10 @@ export default class UIManager {
 
         setTimeout(() => {
             clearInterval(interval);
-            this.app.gameManager.startGame(duration);
+            // Ensure context is correct
+            if (this.app && this.app.gameManager) {
+                this.app.gameManager.startGame(duration);
+            }
         }, 3000);
     }
 

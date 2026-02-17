@@ -17,10 +17,12 @@ export default class GameManager {
         this.physics = new Physics();
         this.camera = new Camera();
         this.trafficManager = new TrafficManager(this); // Pass self
+
+        this.entities = []; // Initialize entities before MapManager (which uses it)
+
         this.mapManager = new MapManager(this); // Pass self
         this.missionManager = new MissionManager(app.saveManager);
 
-        this.entities = [];
         this.player = null;
 
         this.state = 'MENU';
