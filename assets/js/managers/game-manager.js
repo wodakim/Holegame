@@ -65,7 +65,8 @@ export default class GameManager {
 
         // Create Player (Hardcore Small Start)
         const skinInfo = this.app.saveManager.getCurrentSkinInfo();
-        this.player = new Player(0, 0, 15, skinInfo.color, 'You', this.app.saveManager); // Radius 15
+        // Updated: Radius 25 (Buffed from 15) to guarantee domination over Humans/Trash (Size 14/10)
+        this.player = new Player(0, 0, 25, skinInfo.color, 'You', this.app.saveManager);
         this.player.shape = skinInfo.shape || 'circle';
         this.entities.push(this.player);
 

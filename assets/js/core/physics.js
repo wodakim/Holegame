@@ -83,7 +83,7 @@ export default class Physics {
                             }
 
                             if (onEat) onEat(hole, prop);
-
+                            console.log(`[PHYSICS] EATEN (Overshoot): ${prop.propType}`);
                             // Exit loop for this prop
                             return;
                         } else {
@@ -114,6 +114,7 @@ export default class Physics {
                             }
 
                             if (onEat) onEat(hole, prop);
+                            console.log(`[PHYSICS] EATEN (Center): ${prop.propType}`);
                         }
                     }
 
