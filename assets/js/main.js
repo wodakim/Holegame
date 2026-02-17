@@ -18,7 +18,24 @@ class App {
     async init() {
         // 0. Asset Manager (Preload)
         this.assetManager = new AssetManager();
-        await this.loadAssets();
+
+        // Show loading state if needed
+        const loadingScreen = document.getElementById('screen-matchmaking'); // Reuse loader or create new
+        if (loadingScreen) loadingScreen.classList.remove('hidden');
+
+        await new Promise(resolve => {
+            this.assetManager.loadAll(
+                (progress) => {
+                    console.log(`Loading assets: ${Math.round(progress * 100)}%`);
+                },
+                () => {
+                    console.log("Assets Loaded.");
+                    resolve();
+                }
+            );
+        });
+
+        if (loadingScreen) loadingScreen.classList.add('hidden');
 
         // 1. Initialize UI & Data Managers
         this.uiManager = new UIManager(this);
@@ -46,31 +63,7 @@ class App {
         // 6. Initial UI Update
         this.saveManager.updateUI();
 
-        // Hide loader if any (we might add one later)
         console.log("URBAN VOID: Ready.");
-    }
-
-    async loadAssets() {
-        // Queue assets here
-        // Props
-        this.assetManager.queueImage('prop-hydrant', './assets/img/prop-hydrant.svg');
-        this.assetManager.queueImage('prop-cone', './assets/img/prop-cone.svg');
-        this.assetManager.queueImage('prop-mailbox', './assets/img/prop-mailbox.svg');
-        this.assetManager.queueImage('prop-trash', './assets/img/prop-trash.svg');
-        this.assetManager.queueImage('prop-vending', './assets/img/prop-vending.svg');
-        this.assetManager.queueImage('prop-car', './assets/img/prop-car.svg');
-        this.assetManager.queueImage('prop-van', './assets/img/prop-van.svg');
-        this.assetManager.queueImage('prop-tree', './assets/img/prop-tree.svg');
-        this.assetManager.queueImage('prop-building', './assets/img/prop-building.svg');
-
-        // Skins
-        this.assetManager.queueImage('skin-default', './assets/img/skin-default.svg');
-        this.assetManager.queueImage('skin-ufo', './assets/img/skin-ufo.svg');
-
-        // UI
-        this.assetManager.queueImage('ui-coin', './assets/img/ui-coin.svg');
-
-        await this.assetManager.loadAll();
     }
 
     handleResize() {

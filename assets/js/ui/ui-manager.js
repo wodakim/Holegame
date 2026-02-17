@@ -25,7 +25,9 @@ export default class UIManager {
         // Main Menu - Play Button triggers Popup
         const playBtn = document.getElementById('btn-play-menu');
         if (playBtn) {
-            playBtn.addEventListener('click', () => {
+            playBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop bubbling
+                this.app.soundManager.play('uiClick');
                 this.showPopup('timeSelect');
             });
         }
@@ -34,6 +36,8 @@ export default class UIManager {
         const timeButtons = document.querySelectorAll('.btn-time');
         timeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.app.soundManager.play('uiClick');
                 // Handle click on span or button
                 const target = e.target.closest('.btn-time');
                 const time = parseInt(target.dataset.time);
@@ -45,26 +49,64 @@ export default class UIManager {
         // Close Popup
         const closePopup = document.getElementById('btn-close-popup');
         if (closePopup) {
-            closePopup.addEventListener('click', () => this.hidePopup('timeSelect'));
+            closePopup.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.app.soundManager.play('uiClick');
+                this.hidePopup('timeSelect');
+            });
         }
 
-        document.getElementById('btn-shop').addEventListener('click', () => this.app.shopManager.openShop());
-        document.getElementById('btn-no-ads').addEventListener('click', () => this.app.shopManager.buyNoAds());
+        document.getElementById('btn-shop').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.shopManager.openShop();
+        });
+        document.getElementById('btn-no-ads').addEventListener('click', (e) => {
+             e.stopPropagation();
+             this.app.soundManager.play('uiClick');
+             this.app.shopManager.buyNoAds();
+        });
 
         // Shop
-        document.getElementById('btn-back-shop').addEventListener('click', () => this.app.shopManager.closeShop());
+        document.getElementById('btn-back-shop').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.shopManager.closeShop();
+        });
 
         // Game Over
-        document.getElementById('btn-revive').addEventListener('click', () => this.app.gameManager.revivePlayer());
-        document.getElementById('btn-replay').addEventListener('click', () => {
+        document.getElementById('btn-revive').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.gameManager.revivePlayer();
+        });
+        document.getElementById('btn-replay').addEventListener('click', (e) => {
+             e.stopPropagation();
+             this.app.soundManager.play('uiClick');
              this.app.gameManager.startGame(this.lastDuration || 120);
         });
-        document.getElementById('btn-menu-gameover').addEventListener('click', () => this.app.gameManager.quitGame());
+        document.getElementById('btn-menu-gameover').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.gameManager.quitGame();
+        });
 
         // Pause
-        document.getElementById('btn-pause').addEventListener('click', () => this.app.gameManager.pauseGame());
-        document.getElementById('btn-resume').addEventListener('click', () => this.app.gameManager.resumeGame());
-        document.getElementById('btn-quit').addEventListener('click', () => this.app.gameManager.quitGame());
+        document.getElementById('btn-pause').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.gameManager.pauseGame();
+        });
+        document.getElementById('btn-resume').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.gameManager.resumeGame();
+        });
+        document.getElementById('btn-quit').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.app.soundManager.play('uiClick');
+            this.app.gameManager.quitGame();
+        });
     }
 
     startMatchmaking(duration) {
@@ -164,7 +206,9 @@ export default class UIManager {
             card.appendChild(title);
             card.appendChild(desc);
 
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop bubbling
+                this.app.soundManager.play('uiClick');
                 onSelect(choice.id);
             });
 
@@ -198,12 +242,13 @@ export default class UIManager {
         const leaderboard = document.getElementById('leaderboard');
         leaderboard.innerHTML = '';
 
-        const sorted = [...players].sort((a, b) => b.radius - a.radius).slice(0, 5);
+        // FIX: Sorting by score instead of radius
+        const sorted = [...players].sort((a, b) => b.score - a.score).slice(0, 5);
 
         sorted.forEach((h, index) => {
             const div = document.createElement('div');
             div.className = 'rank-item';
-            div.textContent = `${index + 1}. ${h.name} (${Math.floor(h.score || h.radius)})`;
+            div.textContent = `${index + 1}. ${h.name} (${Math.floor(h.score || 0)})`;
             if (h === player) div.style.color = '#ffae00';
             leaderboard.appendChild(div);
         });

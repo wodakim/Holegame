@@ -4,6 +4,7 @@ export default class SoundManager {
         this.masterGain = null;
         this.initialized = false;
         this.sounds = {}; // Cache for buffers if we used files, unused for synth
+        this.ambienceStarted = false;
     }
 
     init() {
@@ -18,9 +19,6 @@ export default class SoundManager {
 
             this.initialized = true;
             console.log("Audio Initialized");
-
-            // Start Ambient
-            this.startAmbience();
         } catch (e) {
             console.warn("WebAudio API not supported or blocked", e);
         }
@@ -31,6 +29,10 @@ export default class SoundManager {
         if (this.ctx && this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
+        if (this.initialized && !this.ambienceStarted) {
+            this.startAmbience();
+            this.ambienceStarted = true;
+        }
     }
 
     play(type) {
@@ -39,12 +41,15 @@ export default class SoundManager {
 
         const now = this.ctx.currentTime;
 
+        // Random pitch variance for less robotic sound
+        const variance = (Math.random() - 0.5) * 0.1; // +/- 5%
+
         switch (type) {
             case 'eatSmall':
-                this.playPop(now);
+                this.playPop(now, 1 + variance);
                 break;
             case 'eatLarge':
-                this.playCrunch(now);
+                this.playCrunch(now, 1 + variance);
                 break;
             case 'levelUp':
                 this.playFanfare(now);
@@ -61,7 +66,7 @@ export default class SoundManager {
         }
     }
 
-    playPop(now) {
+    playPop(now, rate = 1) {
         // "Bloop" sound: Sine wave pitch envelope up + fast decay
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -70,8 +75,8 @@ export default class SoundManager {
         gain.connect(this.masterGain);
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        osc.frequency.setValueAtTime(400 * rate, now);
+        osc.frequency.exponentialRampToValueAtTime(800 * rate, now + 0.1);
 
         gain.gain.setValueAtTime(0.5, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
@@ -80,7 +85,7 @@ export default class SoundManager {
         osc.stop(now + 0.15);
     }
 
-    playCrunch(now) {
+    playCrunch(now, rate = 1) {
         // "Crunch": White noise burst + Low Sawtooth
         // 1. Noise
         const bufferSize = this.ctx.sampleRate * 0.2; // 0.2 seconds
@@ -91,13 +96,15 @@ export default class SoundManager {
         }
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
+        noise.playbackRate.value = rate;
+
         const noiseGain = this.ctx.createGain();
         noiseGain.gain.setValueAtTime(0.5, now);
         noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
 
         const noiseFilter = this.ctx.createBiquadFilter();
         noiseFilter.type = 'lowpass';
-        noiseFilter.frequency.setValueAtTime(1000, now);
+        noiseFilter.frequency.setValueAtTime(1000 * rate, now);
 
         noise.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
@@ -108,8 +115,8 @@ export default class SoundManager {
         const osc = this.ctx.createOscillator();
         const oscGain = this.ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+        osc.frequency.setValueAtTime(150 * rate, now);
+        osc.frequency.exponentialRampToValueAtTime(50 * rate, now + 0.2);
 
         oscGain.gain.setValueAtTime(0.5, now);
         oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
