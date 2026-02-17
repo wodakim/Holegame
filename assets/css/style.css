@@ -400,6 +400,7 @@ button:active {
 .popup {
     background: rgba(0, 0, 0, 0.95);
     z-index: 2000;
+    pointer-events: auto;
 }
 
 .popup-content {
