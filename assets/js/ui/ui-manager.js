@@ -243,10 +243,21 @@ export default class UIManager {
         });
     }
 
-    showGameOver(rank, coinsEarned) {
+    showGameOver(rank, coinsEarned, showRevive) {
         this.switchScreen('gameOver');
         document.getElementById('final-rank').textContent = `RANK #${rank}`;
         document.getElementById('earned-coins').textContent = coinsEarned;
+
+        const reviveBtn = document.getElementById('btn-revive');
+        if (reviveBtn) {
+            if (showRevive) {
+                reviveBtn.classList.remove('hidden');
+                reviveBtn.style.display = 'block'; // Ensure visibility
+            } else {
+                reviveBtn.classList.add('hidden');
+                reviveBtn.style.display = 'none';
+            }
+        }
 
         const bar = document.getElementById('progress-bar-fill');
         bar.style.width = '0%';

@@ -106,6 +106,22 @@ export default class Renderer {
         this.ctx.fillStyle = this.sidewalkColor;
         this.ctx.fillRect(startX - 100, startY - 100, viewportWidth + 200, viewportHeight + 200);
 
+        // 1.5 Draw Grass Corners (Aesthetics)
+        this.ctx.fillStyle = '#2d4a3e'; // Muted Green
+        for (let x = gridStartX; x <= endX; x += this.gridSize) {
+            for (let y = gridStartY; y <= endY; y += this.gridSize) {
+                // Determine block center
+                const cx = x + this.gridSize / 2;
+                const cy = y + this.gridSize / 2;
+                // Draw a small green patch in random corners based on coordinate hash
+                if ((x + y) % 3 === 0) {
+                    this.ctx.fillRect(x + 5, y + 5, 20, 20);
+                } else if ((x + y) % 5 === 0) {
+                     this.ctx.fillRect(x + this.gridSize - 25, y + this.gridSize - 25, 20, 20);
+                }
+            }
+        }
+
         // 2. Draw Roads (Grid Lines)
         this.ctx.lineWidth = this.roadWidth;
         this.ctx.strokeStyle = this.roadColor;
@@ -121,9 +137,9 @@ export default class Renderer {
         }
         this.ctx.stroke();
 
-        // 3. Draw Road Markings (Dashed White Lines)
+        // 3. Draw Road Markings (Dashed White Lines) - Reduced opacity
         this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         this.ctx.setLineDash([10, 10]);
         this.ctx.beginPath();
 

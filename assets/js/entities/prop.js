@@ -4,14 +4,15 @@ export default class Prop extends Entity {
     // Static configuration for Prop Types
     static TYPES = {
         // Tier 1: Trash / Small Objects (Eatable by 15-20)
-        'bottle': { radius: 5, value: 1, color: '#33ff33', isSolid: false, height: 10 },
-        'cone':   { radius: 8, value: 2, color: '#ffae00', isSolid: false, height: 15 },
-        'mailbox':{ radius: 10, value: 5, color: '#0055ff', isSolid: true, height: 15 },
+        // SIGNIFICANTLY BUFFED VALUES FOR EARLY GAME GROWTH
+        'bottle': { radius: 5, value: 5, color: '#33ff33', isSolid: false, height: 10 },
+        'cone':   { radius: 8, value: 10, color: '#ffae00', isSolid: false, height: 15 },
+        'mailbox':{ radius: 10, value: 25, color: '#0055ff', isSolid: true, height: 15 },
 
         // Tier 2: Street Furniture (Eatable by 20-30)
-        'pole':   { radius: 12, value: 10, color: '#888888', isSolid: true, height: 60 }, // Buffed
-        'fence':  { radius: 15, value: 15, color: '#aaaaaa', isSolid: true, height: 20 }, // Buffed
-        'trash_bin': { radius: 18, value: 20, color: '#225522', isSolid: true, height: 20 }, // Buffed
+        'pole':   { radius: 12, value: 40, color: '#888888', isSolid: true, height: 60 },
+        'fence':  { radius: 15, value: 50, color: '#aaaaaa', isSolid: true, height: 20 },
+        'trash_bin': { radius: 18, value: 60, color: '#225522', isSolid: true, height: 20 },
 
         // Tier 3: Living Beings (Eatable by 30-40)
         'human':  { radius: 18, value: 25, color: '#ffccaa', isSolid: false, height: 35 }, // Buffed

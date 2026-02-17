@@ -118,7 +118,7 @@ export default class GameManager {
         // 1. Update Timer
         this.gameTime -= dt;
         if (this.gameTime <= 0) {
-            this.gameOver();
+            this.gameOver(true); // true = time up (game won/finished)
             return;
         }
 
@@ -225,7 +225,7 @@ export default class GameManager {
         }
 
         if (this.player && this.player.markedForDeletion) {
-            this.gameOver();
+            this.gameOver(false); // false = died
         }
 
         // 6. Update HUD
@@ -340,7 +340,7 @@ export default class GameManager {
         this.app.uiManager.updateHUD(this.gameTime, this.player.score, this.kills, holes, this.player);
     }
 
-    gameOver() {
+    gameOver(isTimeUp = false) {
         this.state = 'GAMEOVER';
         const holes = this.entities.filter(e => e.type === 'hole');
         holes.sort((a, b) => b.radius - a.radius);
@@ -349,20 +349,13 @@ export default class GameManager {
         if (this.player.score > 5000) this.missionManager.onEvent('reach_mass', 5000);
         const missionReward = this.missionManager.checkCompletion();
 
-        // Fixed Match Reward based on Duration
         let matchReward = 0;
-        // Check initial duration (gameTime is current remaining, need original)
-        // We can infer or store it. Let's assume standard durations:
-        // Short (2m/120s) -> 50
-        // Medium (5m/300s) -> 200
-        // Long (10m/600s) -> 1000
-        // We need to store 'maxTime' or 'totalDuration' in startGame.
-        // For now, let's use a heuristic or add a property.
-
-        // Quick fix: Add this.totalDuration to startGame
-        if (this.totalDuration >= 600) matchReward = 1000;
-        else if (this.totalDuration >= 300) matchReward = 200;
-        else matchReward = 50;
+        if (isTimeUp) {
+            // Only give match reward if time completed
+            if (this.totalDuration >= 600) matchReward = 1000;
+            else if (this.totalDuration >= 300) matchReward = 200;
+            else matchReward = 50;
+        }
 
         const coinsEarned = matchReward + missionReward;
         this.app.saveManager.addCoins(coinsEarned);
@@ -371,7 +364,7 @@ export default class GameManager {
             this.app.saveManager.setHighScore(this.player.score);
         }
 
-        this.app.uiManager.showGameOver(rank, coinsEarned);
+        this.app.uiManager.showGameOver(rank, coinsEarned, !isTimeUp); // !isTimeUp = showRevive (only if died)
     }
 
     revivePlayer() {
