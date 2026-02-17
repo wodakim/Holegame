@@ -1,69 +1,69 @@
-# URBAN VOID - ART DIRECTION & PROJECT BIBLE
+# PROJECT_DA.md - URBAN VOID: DA & UX Overhaul
 
-## 1. VISION & THEME
-**"Geeky Voxel-Vector Chaos"**
-A high-energy, colorful "eat-em-up" set in a stylized geek culture city. The visual style draws heavy inspiration from **Dofus/Wakfu (Ankama)** — emphasizing isometric perspectives, vibrant saturated colors, thick vector-like outlines ("Pathfinder Style"), and a playful, organic feel even for mechanical objects.
+## 1. Vision & Mood
+**Theme:** "Satirical City" / "Geek Fun"
+**Style:** High-quality Cartoon SVG (Vector Art), Clean lines, Flat Design with subtle gradients/shadows (2.5D feel).
+**Atmosphere:** Vibrant, chaotic, playful. The city feels alive but silly. Objects have personality (e.g., hydrants with eyes, vending machines that look surprised).
+**Target Audience:** Mobile gamers, fans of io games, casual players.
 
-### Pillars
-*   **Juicy & Bouncy:** Everything should feel alive. Buttons squash and stretch. The player "hole" wobbles. Eating things feels satisfying (screen shake, particles).
-*   **Readable Chaos:** Clean outlines, distinct color coding for tiers. The UI must be readable (High Contrast/Stroke).
-*   **Geek Culture:** Props and buildings reference gaming, tech, and pop culture (Arcade machines, Servers, Comic shops).
-*   **Coherence:** Eating mechanics must feel fair. If it looks smaller, it is eatable.
+## 2. Color Palette
+High contrast, saturated colors to pop on mobile screens.
 
----
+*   **Primary (Action/Player):** `#00F3FF` (Cyan Neon) -> `#00D4FF` (Deep Sky Blue)
+*   **Secondary (Enemies/Danger):** `#FF0055` (Radical Red) -> `#D40044`
+*   **Tertiary (Points/Gold):** `#FFD700` (Gold) -> `#FFAA00`
+*   **Background (Floor/Asphalt):** `#2C3E50` (Dark Blue Grey) - Not pitch black, cleaner look.
+*   **UI Backgrounds:** `#FFFFFF` (Clean White) with `#000000` text for readability, or Dark Mode with Neon accents.
+*   **Success/Growth:** `#39FF14` (Neon Green)
 
-## 2. COLOR PALETTE
-Moving away from "Neon/Dark" to "Vibrant/Daylight".
+## 3. Typography
+**Headings:** `Fredoka One` or `Baloo 2` (Rounded, bold, friendly).
+**Body Text:** `Montserrat` or `Nunito` (Readable, rounded sans-serif).
 
-| Element | Color Hex | Description |
-| :--- | :--- | :--- |
-| **Background (Sky)** | `#3498DB` | Bright Blue Sky (Replaces Abyss) |
-| **Ground (City)** | `#ECF0F1` | Clean, bright paper/concrete texture |
-| **Outlines** | `#2C3E50` | Thick, consistent dark strokes (3px) |
-| **Player (Hole)** | `#1ABC9C` | Vibrant Turquoise (Gradient to Dark) |
-| **UI Primary** | `#F1C40F` | Sunflower Yellow (Buttons, Highlights) |
-| **UI Secondary** | `#E67E22` | Carrot Orange (Alerts, Important text) |
-| **UI Accent** | `#9B59B6` | Amethyst Purple (Magic/Tech vibes) |
+## 4. Assets (SVG List)
+All assets will be generated as SVG strings/files to ensure crisp rendering at any scale.
 
----
+### Props (Satirical City)
+1.  **Hydrant:** Red, classic shape, but with two "eyes" (bolts) looking worried.
+2.  **Cone:** Orange/White striped, slightly bent/melted looking.
+3.  **Mailbox:** Blue, boxy, overflowing with letters (one stuck in the slot like a tongue).
+4.  **Trash Bin:** Green metal can, lid slightly open, fish bone sticking out.
+5.  **Vending Machine:** Retro style, colorful bottles visible, "Sold Out" sign.
+6.  **Car:** Round, beetle-like shape, exaggerated wheels, no sharp angles.
+7.  **Bus/Van:** Rectangular but with rounded corners, "School Bus" yellow or "Hippie Van" flowers.
+8.  **Tree:** Simple geometric foliage (spheres/clouds), brown trunk.
+9.  **Building:** Isometric block, colorful windows, maybe a face on the facade?
 
-## 3. ASSETS & GRAPHICS
-Currently procedural (Canvas API).
+### Skins (Player)
+1.  **Default:** Black Hole with a spinning neon rim.
+2.  **UFO:** Flying saucer shape, beam underneath (the "hole").
+3.  **Glitch:** Pixelated edges, shifting colors.
+4.  **Donut:** Pink frosting, sprinkles.
 
-### Procedural Guidelines (Current)
-*   **Stroke:** All objects must have a `lineWidth` of 3px with `strokeStyle = '#2C3E50'`.
-*   **Shading:** Use "Cel-Shading" logic (solid fill + 1 shadow layer + 1 highlight layer). No smooth gradients.
-*   **Perspective:** 2.5D Isometric projection for buildings/tall objects.
-*   **Solidity:** Small objects (Trash, Humans, Small Vehicles) are **SOFT** (non-solid). Only Structures (Buildings, Walls) are **SOLID**.
+### UI Icons
+1.  **Coin:** Gold coin with a sparkle.
+2.  **Skull:** Cartoon skull (for kills).
+3.  **Clock:** Stopwatch style (for time).
+4.  **Pause/Play:** Rounded buttons.
 
----
+## 5. Audio (SFX)
+**Style:** Cartoon/Slapstick.
+*   **Eat Small:** "Pop!", "Bloop!"
+*   **Eat Large:** "Crunch!", "Gulp!"
+*   **Level Up:** "Ta-da!", Fanfare.
+*   **Die:** "Womp womp", Vinyl scratch.
+*   **Music:** Upbeat, funky, looping bassline (Synth-based).
 
-## 4. USER INTERFACE (UI)
-*   **Style:** "Mobile Casual AAA". Big rounded buttons, inner shadows to give depth.
-*   **Typography:** Thick "Pathfinder" outlines on all headers and buttons for readability.
-*   **Animations:**
-    *   *Press:* Scale down to 0.95.
-    *   *Appear:* Elastic bounce (BackOut easing).
-*   **Layout:**
-    *   Top: HUD (Score, Time) in "Pill" shapes floating.
-    *   Bottom: Virtual Joystick (Hidden/Subtle).
-    *   Menus: Modal cards with backdrop blur.
+## 6. Technical Constraints
+*   **Format:** SVG for graphics, WebAudio for sound (procedural or base64 samples).
+*   **Performance:**
+    *   Preload all SVGs as `Image` objects at startup.
+    *   Draw using `ctx.drawImage` in the loop.
+    *   Use offscreen canvases for complex static shapes if needed.
+*   **Responsiveness:** UI must scale perfectly from iPhone SE to iPad Pro. Touch targets > 44px.
 
----
-
-## 5. AUDIO (OSCILLATORS)
-**Goal:** Retro-Modern Synthesis.
-*   **UI Clicks:** High-pitched "Wood block" or "Bubble" pop (Sine wave, fast decay).
-*   **Eat Small:** Short "Bloop" (Sine sweep up).
-*   **Eat Big:** Bass-heavy "Crunch" (Sawtooth + Low Pass Filter sweep).
-*   **Level Up:** Positive Major Chord Arpeggio (Square wave).
-
----
-
-## 6. TECH ROADMAP
-*   [x] **Phase 1 (Design):** Establish this document and rules.
-*   [x] **Phase 2 (UI):** Reskin CSS to match the "Dofus/Geek" palette and shapes. Added Pathfinder outlines.
-*   [x] **Phase 3 (Renderer):** Rewrite `draw()` methods to add outlines and "toon" shading.
-*   [x] **Phase 4 (Audio):** Implement `Synth` class for better SFX.
-*   [x] **Phase 5 (Polish):** Fixed Physics coherence (Eating Threshold 1.0) and visual bugs (Rubik strobe).
-*   [ ] **Phase 6 (Content):** Add more skins, missions, and tiered props.
+## 7. Implementation Plan
+1.  **AssetManager:** Load SVGs.
+2.  **Renderer:** Draw SVGs.
+3.  **UI:** Apply CSS/HTML overhaul.
+4.  **Polish:** Animations and "Juice".

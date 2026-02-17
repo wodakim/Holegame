@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad-car" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#9b59b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8e44ad;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Wheels -->
+  <circle cx="30" cy="80" r="10" fill="#2c3e50"/>
+  <circle cx="70" cy="80" r="10" fill="#2c3e50"/>
+  <circle cx="30" cy="80" r="4" fill="#bdc3c7"/>
+  <circle cx="70" cy="80" r="4" fill="#bdc3c7"/>
+  <!-- Body -->
+  <path d="M15 75 L85 75 L85 60 Q85 40 65 40 L35 40 Q15 40 15 60 Z" fill="url(#grad-car)"/>
+  <!-- Windows -->
+  <path d="M35 45 L65 45 L65 55 L80 60 L20 60 L35 55 Z" fill="#ecf0f1"/>
+  <!-- Headlight -->
+  <circle cx="85" cy="65" r="3" fill="#f1c40f"/>
+</svg>
