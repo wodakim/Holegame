@@ -3,17 +3,27 @@ import Hole from './hole.js';
 export default class Bot extends Hole {
     constructor(x, y, radius, color, name) {
         super(x, y, radius, color, name);
-        this.type = 'hole'; // Ensure type is set
+        this.type = 'hole';
         this.name = name;
-        this.state = 'wander'; // wander, chase, flee
+        this.state = 'wander';
         this.target = null;
         this.lastStateChange = 0;
         this.wanderAngle = Math.random() * Math.PI * 2;
-        this.speed = 200; // Base speed
+        this.speed = 150;
+
+        // Bot Leveling Logic
+        this.nextThreshold = 1000; // Same start as player
+        this.level = 1;
+        this.upgradePool = ['speed', 'size', 'satellite', 'suction', 'digest', 'cooldown'];
     }
 
     update(dt, entities) {
         super.update(dt);
+
+        // Independent Level Up Check
+        if (this.score >= this.nextThreshold) {
+            this.levelUp();
+        }
 
         // AI Logic
         let closestThreat = null;
@@ -21,7 +31,6 @@ export default class Bot extends Hole {
         let minThreatDist = Infinity;
         let minFoodDist = Infinity;
 
-        // Scan radius
         const scanRadius = 600;
 
         entities.forEach(entity => {
@@ -32,7 +41,6 @@ export default class Bot extends Hole {
             const dy = entity.y - this.y;
             const distSq = dx*dx + dy*dy;
 
-            // Optimization: skip far entities
             if (distSq > scanRadius * scanRadius) return;
 
             const dist = Math.sqrt(distSq);
@@ -43,14 +51,13 @@ export default class Bot extends Hole {
                         minThreatDist = dist;
                         closestThreat = entity;
                     }
-                } else if (entity.radius < this.radius * 0.9) { // Can eat
+                } else if (entity.radius < this.radius * 0.9) {
                     if (dist < minFoodDist) {
                         minFoodDist = dist;
                         closestFood = entity;
                     }
                 }
             } else if (entity.type === 'prop') {
-                // Check if eatable
                 if (this.radius > entity.radius * 1.1) {
                      if (dist < minFoodDist) {
                         minFoodDist = dist;
@@ -80,31 +87,44 @@ export default class Bot extends Hole {
             const dy = this.y - this.target.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
             if (dist > 0) {
-                vx = (dx / dist) * this.speed;
-                vy = (dy / dist) * this.speed;
+                vx = (dx / dist) * this.currentSpeed; // Use currentSpeed (affected by upgrades/size)
+                vy = (dy / dist) * this.currentSpeed;
             }
         } else if (this.state === 'chase') {
             const dx = this.target.x - this.x;
             const dy = this.target.y - this.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
             if (dist > 0) {
-                vx = (dx / dist) * this.speed;
-                vy = (dy / dist) * this.speed;
+                vx = (dx / dist) * this.currentSpeed;
+                vy = (dy / dist) * this.currentSpeed;
             }
         } else {
             // Wander
             this.lastStateChange += dt;
             if (this.lastStateChange > 1.5 + Math.random()) {
-                this.wanderAngle += (Math.random() - 0.5) * 2; // Turn slightly
+                this.wanderAngle += (Math.random() - 0.5) * 2;
                 this.lastStateChange = 0;
             }
-            vx = Math.cos(this.wanderAngle) * this.speed * 0.6;
-            vy = Math.sin(this.wanderAngle) * this.speed * 0.6;
+            vx = Math.cos(this.wanderAngle) * this.currentSpeed * 0.6;
+            vy = Math.sin(this.wanderAngle) * this.currentSpeed * 0.6;
         }
 
         this.velocity = { x: vx, y: vy };
+    }
 
-        // Boundaries handled by Physics? No, infinite map.
-        // Despawning handled by GameManager if too far.
+    levelUp() {
+        // Increase threshold identically to player
+        const increment = this.level * 1500;
+        this.nextThreshold += increment;
+        this.level++;
+
+        // Pick random upgrade
+        const choice = this.upgradePool[Math.floor(Math.random() * this.upgradePool.length)];
+        this.addUpgrade(choice);
+
+        // Optional: Visual cue for bot leveling up?
+        // Maybe a particle burst or floating text "LEVEL UP!"
+        // But GameManager handles text... Bot can't spawn text directly unless we pass GameManager.
+        // We can just rely on size change/speed change being visible.
     }
 }

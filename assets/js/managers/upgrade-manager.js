@@ -1,8 +1,11 @@
 export default class UpgradeManager {
     constructor(gameManager) {
         this.gameManager = gameManager;
-        this.nextThreshold = 500; // First upgrade at 500 points
-        this.thresholdStep = 1000; // Subsequent upgrades every 1000 points
+        // Scalable difficulty: Start at 1000, then +2000, +3000...
+        this.baseThreshold = 1000;
+        this.nextThreshold = this.baseThreshold;
+        this.level = 1;
+
         this.isChoosing = false;
 
         // Define Upgrade Options
@@ -17,10 +20,16 @@ export default class UpgradeManager {
     }
 
     checkLevelUp(playerScore) {
-        // Simple logic: if score crosses threshold
         if (playerScore >= this.nextThreshold) {
             this.triggerLevelUp();
-            this.nextThreshold += this.thresholdStep;
+            // Increase threshold progressively (Linear scaling but harder)
+            // Level 1: 1000
+            // Level 2: 1000 + (1 * 1500) = 2500
+            // Level 3: 2500 + (2 * 1500) = 5500
+            // This makes it scalable and harder as you go.
+            const increment = this.level * 1500;
+            this.nextThreshold += increment;
+            this.level++;
         }
     }
 
@@ -53,13 +62,8 @@ export default class UpgradeManager {
         // Apply to Player using Hole's method
         player.addUpgrade(id);
 
-        // Buff some bots to keep challenge up
-        this.gameManager.entities.forEach(e => {
-            if (e.type === 'hole' && e !== player && Math.random() < 0.3) {
-                 const randomUp = this.upgrades[Math.floor(Math.random() * this.upgrades.length)];
-                 e.addUpgrade(randomUp.id);
-            }
-        });
+        // REMOVED: Unfair bot buffing logic.
+        // Bots now level up independently in their update loop.
 
         // Resume Game
         this.isChoosing = false;
